@@ -16,21 +16,23 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErr(null);
-    setLoading(true);
+    alert('submit clicked');             // <-- test visible
+    console.log('[login] submit clicked');
 
+    setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
     setLoading(false);
+
+    console.log('[login] result', { data, error });
 
     if (error) {
       setErr(error.message);
       return;
     }
-    // Connexion OK → vers le dashboard
-    router.push('/dashboard');
+    router.replace('/dashboard'); // redirection
   }
 
   return (
