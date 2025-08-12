@@ -19,10 +19,10 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    }
+  "@/*": [
+    "*"
+  ]
+}
   },
   "include": [
     "next-env.d.ts",
