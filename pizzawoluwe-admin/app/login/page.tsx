@@ -1,3 +1,8 @@
+console.log('[env check]',
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 12) + '...'
+);
+
 'use client';
 
 import { useState } from 'react';
