@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
   const hasSupabaseCookie = req.cookies.has('sb-access-token') || 
                            req.cookies.has('supabase-auth-token') ||
                            req.cookies.has('sb-refresh-token') ||
-                           Array.from(req.cookies.keys()).some(key => key.startsWith('sb-'));
+                           Array.from(req.cookies.getAll()).some(cookie => cookie.name.startsWith('sb-'));
   
   // Si route protégée et pas de cookie d'authentification → rediriger vers login
   if (isProtected && !hasSupabaseCookie) {
