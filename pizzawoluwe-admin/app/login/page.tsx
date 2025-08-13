@@ -14,12 +14,11 @@ export default function LoginPage() {
   const [err, setErr] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setErr(null);
-    alert('submit clicked');             // <-- test visible
-    console.log('[login] submit clicked');
+  e.preventDefault();
+  setErr(null);
+  console.log('[login] submit clicked');
 
-    setLoading(true);
+  setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
