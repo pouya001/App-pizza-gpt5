@@ -10,7 +10,9 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   const isProtected = protectedPaths.some(p => pathname.startsWith(p) || pathname === '/');
-  const accessToken = req.cookies.get('sb-access-token')?.value;
+  const accessToken = req.cookies.get('sb-access-token')?.value || 
+                   req.cookies.get('supabase-auth-token')?.value ||
+                   req.cookies.get('sb-refresh-token')?.value;
   if (isProtected && !accessToken) {
     const url = req.nextUrl.clone(); url.pathname = '/login'; return NextResponse.redirect(url);
   }
