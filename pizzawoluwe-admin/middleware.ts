@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -6,18 +5,34 @@ const protectedPaths = ['/dashboard', '/orders', '/clients', '/pizzas', '/slots'
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
+  // Ignorer les fichiers statiques et API
   if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.startsWith('/public') || pathname.startsWith('/favicon')) {
     return NextResponse.next();
   }
+  
+  // Vérifier si la route est protégée
   const isProtected = protectedPaths.some(p => pathname.startsWith(p) || pathname === '/');
-  const accessToken = req.cookies.get('sb-access-token')?.value || 
-                   req.cookies.get('supabase-auth-token')?.value ||
-                   req.cookies.get('sb-refresh-token')?.value;
-  if (isProtected && !accessToken) {
-    const url = req.nextUrl.clone(); url.pathname = '/login'; return NextResponse.redirect(url);
+  
+  // Vérifier si l'utilisateur est connecté via les cookies Supabase
+  const hasSupabaseCookie = req.cookies.has('sb-access-token') || 
+                           req.cookies.has('supabase-auth-token') ||
+                           req.cookies.has('sb-refresh-token') ||
+                           Array.from(req.cookies.keys()).some(key => key.startsWith('sb-'));
+  
+  // Si route protégée et pas de cookie d'authentification → rediriger vers login
+  if (isProtected && !hasSupabaseCookie) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
-  if (pathname === '/login' && accessToken) {
-    const url = req.nextUrl.clone(); url.pathname = '/dashboard'; return NextResponse.redirect(url);
+  
+  // Si sur login et déjà connecté → rediriger vers dashboard
+  if (pathname === '/login' && hasSupabaseCookie) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
   }
+  
   return NextResponse.next();
 }
