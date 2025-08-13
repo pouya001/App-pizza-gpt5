@@ -19,10 +19,16 @@ export default function LoginPage() {
   console.log('[login] submit clicked');
 
   setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+
+// DEBUG - Ajoutez ces 3 lignes
+console.log('[DEBUG] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('[DEBUG] Credentials:', { email, password });
+console.log('[DEBUG] Supabase client:', supabase);
+
+const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
     setLoading(false);
 
     console.log('[login] result', { data, error });
