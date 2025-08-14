@@ -1,82 +1,228 @@
-
 'use client';
 import Shell from '@/src/components/Shell';
-import { supabase } from '@/src/lib/supabaseClient';
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-type Pizza = { id: number; name: string; price_eur: number; available: boolean };
-type Client = { id: number; name: string; phone: string; email: string | null };
-type Order = { id?: number; number?: string; client_id: number | null; scheduled_at: string; status: string; notes: string | null };
-type Item = { pizza_id: number | null; qty: number; price_eur: number };
-export default function OrderEdit() {
-  const params = useParams(); const router = useRouter();
-  const id = params?.id === 'new' ? null : Number(params?.id);
-  const [pizzas, setPizzas] = useState<Pizza[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [order, setOrder] = useState<Order>({ client_id: null, scheduled_at: new Date().toISOString(), status: 'waiting', notes: null });
-  const [items, setItems] = useState<Item[]>([{ pizza_id: null, qty: 1, price_eur: 0 }]);
-  useEffect(() => { (async () => {
-      const { data: p } = await supabase.from('pizzas').select('*').eq('available', true).order('name'); setPizzas(p ?? []);
-      const { data: c } = await supabase.from('clients').select('*').order('name'); setClients(c ?? []);
-      if (id) { const { data } = await supabase.from('orders').select('*').eq('id', id).single();
-        const { data: it } = await supabase.from('order_items').select('*').eq('order_id', id);
-        if (data) setOrder(data as any); if (it) setItems((it as any).map((x:any)=>({ pizza_id: x.pizza_id, qty: x.qty, price_eur: x.price_eur })));
-      }
-    })(); }, [id]);
-  const total = useMemo(() => items.reduce((s, it) => s + (it.price_eur || 0) * (it.qty || 0), 0), [items]);
-  function setItem(idx: number, patch: Partial<Item>) { setItems(prev => prev.map((it, i) => i===idx ? { ...it, ...patch } : it)); }
-  function addItem() { setItems(prev => [...prev, { pizza_id: null, qty: 1, price_eur: 0 }]); }
-  function removeItem(i: number) { setItems(prev => prev.filter((_, idx) => idx !== i)); }
-  function onPizzaChange(i: number, pizza_id: number) { const p = pizzas.find(p=>p.id===pizza_id); setItem(i, { pizza_id, price_eur: p?.price_eur ?? 0 }); }
-  async function save() {
-    if (!order.client_id) { alert('Choisissez un client.'); return; }
-    if (!items.length || items.some(it => !it.pizza_id)) { alert('Ajoutez au moins une pizza.'); return; }
-    let orderId = id;
-    if (orderId) {
-      const { error } = await supabase.from('orders').update({ client_id: order.client_id, scheduled_at: order.scheduled_at, status: order.status, notes: order.notes, total_eur: total }).eq('id', orderId);
-      if (error) { alert(error.message); return; }
-      await supabase.from('order_items').delete().eq('order_id', orderId);
-      await supabase.from('order_items').insert(items.map(it => ({ order_id: orderId!, ...it })));
-    } else {
-      const { data, error } = await supabase.rpc('create_order_with_items', { p_client_id: order.client_id, p_scheduled_at: order.scheduled_at, p_notes: order.notes, p_items: items });
-      if (error) { alert(error.message); return; } orderId = data?.id;
-    }
-    router.push('/orders');
+import { supabase } from '@/src/lib/supabaseClient';
+import { statusClass, type OrderStatus } from '@/src/lib/status';
+import Link from 'next/link';
+
+type OrderRow = { 
+  id: number; 
+  number: string; 
+  customer_name: string; 
+  customer_phone: string | null; 
+  scheduled_at: string; 
+  items_text: string; 
+  total_eur: number; 
+  status: OrderStatus 
+};
+
+export default function OrdersPage() {
+  const [rows, setRows] = useState<OrderRow[]>([]);
+  const [q, setQ] = useState(''); 
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortCol, setSortCol] = useState<string>('scheduled_at'); 
+  const [sortAsc, setSortAsc] = useState<boolean>(false);
+
+  async function load() { 
+    const { data } = await supabase.from('orders_view').select('*'); 
+    setRows((data ?? []) as any); 
   }
+
+  useEffect(() => { 
+    load(); 
+  }, []);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return rows.filter(r => {
+      const matchQ = term ? (r.number.toLowerCase().includes(term) || (r.customer_name ?? '').toLowerCase().includes(term)) : true;
+      const matchStatus = statusFilter === 'all' ? true : r.status === statusFilter; 
+      return matchQ && matchStatus;
+    }).sort((a, b) => { 
+      const va = (a as any)[sortCol], vb = (b as any)[sortCol]; 
+      if (va < vb) return sortAsc ? -1 : 1; 
+      if (va > vb) return sortAsc ? 1 : -1; 
+      return 0; 
+    });
+  }, [rows, q, statusFilter, sortCol, sortAsc]);
+
+  async function changeStatus(id: number, status: OrderStatus) { 
+    await supabase.from('orders').update({ status }).eq('id', id); 
+    await load(); 
+  }
+
+  async function remove(id: number) { 
+    if (!confirm('Supprimer cette commande ?')) return; 
+    await supabase.from('orders').delete().eq('id', id); 
+    await load(); 
+  }
+
+  function getStatusColor(status: OrderStatus) {
+    switch (status) {
+      case 'waiting': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'preparing': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'ready': return 'bg-green-100 text-green-800 border-green-200';
+      case 'delivered': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  }
+
+  function getStatusLabel(status: OrderStatus) {
+    switch (status) {
+      case 'waiting': return 'En attente';
+      case 'confirmed': return 'Confirmée';
+      case 'preparing': return 'En préparation';
+      case 'ready': return 'Prête';
+      case 'delivered': return 'Livrée';
+      case 'cancelled': return 'Annulée';
+      default: return status;
+    }
+  }
+
+  // Séparer prénom et nom
+  function parseCustomerName(fullName: string) {
+    const parts = fullName.trim().split(' ');
+    if (parts.length >= 2) {
+      const firstName = parts[0];
+      const lastName = parts.slice(1).join(' ');
+      return { firstName, lastName };
+    }
+    return { firstName: fullName, lastName: '' };
+  }
+
   return (
     <Shell>
-      <h1 className="text-xl font-semibold mb-4">{id ? 'Modifier la commande' : 'Nouvelle commande'}</h1>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="card space-y-3">
-          <div><label className="block text-sm mb-1">Client</label>
-            <select className="select" value={order.client_id ?? ''} onChange={e=>setOrder({...order, client_id: Number(e.target.value)})}>
-              <option value="">-- Sélectionner --</option>{clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.phone})</option>)}
-            </select></div>
-          <div><label className="block text-sm mb-1">Date/Heure</label>
-            <input className="input" type="datetime-local" value={order.scheduled_at.slice(0,16)} onChange={e=>setOrder({...order, scheduled_at: new Date(e.target.value).toISOString()})}/>
-          </div>
-          <div><label className="block text-sm mb-1">Notes</label>
-            <textarea className="input" rows={3} value={order.notes ?? ''} onChange={e=>setOrder({...order, notes: e.target.value})} />
-          </div>
-        </div>
-        <div className="card space-y-3">
-          <div className="flex items-center justify-between"><h2 className="font-semibold">Pizzas</h2><button className="btn" onClick={addItem}>+ Ajouter</button></div>
-          {items.map((it, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-7">
-                <select className="select" value={it.pizza_id ?? ''} onChange={e=>onPizzaChange(i, Number(e.target.value))}>
-                  <option value="">-- Pizza --</option>{pizzas.map(p => <option key={p.id} value={p.id}>{p.name} — {p.price_eur.toFixed(2)}€</option>)}
-                </select>
-              </div>
-              <div className="col-span-2"><input className="input" type="number" min={1} max={10} value={it.qty} onChange={e=>setItem(i, { qty: Number(e.target.value) })}/></div>
-              <div className="col-span-2"><input className="input" type="number" min={0} step="0.01" value={it.price_eur} onChange={e=>setItem(i, { price_eur: Number(e.target.value) })}/></div>
-              <div className="col-span-1 text-right"><button className="btn" onClick={()=>removeItem(i)}>✕</button></div>
-            </div>
-          ))}
-          <div className="text-right font-semibold">Total: {total.toFixed(2)} €</div>
-        </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+        <h1 className="text-xl font-semibold">Commandes</h1>
+        <Link 
+          href="/orders/new" 
+          className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-center"
+        >
+          + Nouvelle commande
+        </Link>
       </div>
-      <div className="mt-4 flex gap-2"><button className="btn btn-primary" onClick={save}>Enregistrer</button></div>
+
+      {/* Filtres */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <input 
+          className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" 
+          placeholder="Recherche (#numéro ou client)" 
+          value={q} 
+          onChange={e => setQ(e.target.value)} 
+        />
+        <select 
+          className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white" 
+          value={statusFilter} 
+          onChange={e => setStatusFilter(e.target.value)}
+        >
+          <option value="all">Tous les statuts</option>
+          <option value="waiting">En attente</option>
+          <option value="confirmed">Confirmée</option>
+          <option value="preparing">En préparation</option>
+          <option value="ready">Prête</option>
+          <option value="delivered">Livrée</option>
+          <option value="cancelled">Annulée</option>
+        </select>
+      </div>
+
+      {/* Liste des commandes en cartes */}
+      <div className="grid gap-4">
+        {filtered.map(order => {
+          const { firstName, lastName } = parseCustomerName(order.customer_name);
+          const orderDate = new Date(order.scheduled_at);
+          
+          return (
+            <div key={order.id} className="bg-white rounded-lg shadow-sm border p-4 hover:shadow-md transition-shadow">
+              {/* En-tête de la carte */}
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-lg text-gray-900">#{order.number}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                      {getStatusLabel(order.status)}
+                    </span>
+                  </div>
+                  <div className="text-lg font-medium text-gray-900">
+                    {firstName} <span className="font-normal text-gray-600">{lastName}</span>
+                  </div>
+                  {order.customer_phone && (
+                    <div className="text-sm text-gray-500">{order.customer_phone}</div>
+                  )}
+                </div>
+                
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-green-600">{order.total_eur.toFixed(2)} €</div>
+                  <div className="text-sm text-gray-500">
+                    {orderDate.toLocaleDateString('fr-FR')}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Détails des pizzas */}
+              <div className="mb-4">
+                <div className="text-sm text-gray-600 bg-gray-50 rounded p-2">
+                  {order.items_text || 'Aucun détail'}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                {/* Changement de statut */}
+                <select 
+                  className={`flex-1 px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-red-500 ${getStatusColor(order.status)}`}
+                  value={order.status} 
+                  onChange={(e) => changeStatus(order.id, e.target.value as OrderStatus)}
+                >
+                  <option value="waiting">En attente</option>
+                  <option value="confirmed">Confirmée</option>
+                  <option value="preparing">En préparation</option>
+                  <option value="ready">Prête</option>
+                  <option value="delivered">Livrée</option>
+                  <option value="cancelled">Annulée</option>
+                </select>
+
+                {/* Boutons d'action */}
+                <div className="flex gap-2">
+                  <Link 
+                    href={`/orders/${order.id}`} 
+                    className="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                  >
+                    Modifier
+                  </Link>
+                  <button 
+                    className="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                    onClick={() => remove(order.id)}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Message si aucune commande */}
+      {filtered.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <div className="text-lg mb-2">
+            {q || statusFilter !== 'all' ? 'Aucune commande trouvée' : 'Aucune commande enregistrée'}
+          </div>
+          {!q && statusFilter === 'all' && (
+            <Link 
+              href="/orders/new"
+              className="inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Créer la première commande
+            </Link>
+          )}
+        </div>
+      )}
     </Shell>
   );
 }
