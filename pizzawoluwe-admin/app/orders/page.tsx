@@ -24,7 +24,10 @@ export default function OrdersPage() {
   const [sortAsc, setSortAsc] = useState<boolean>(false);
 
   async function load() { 
-    const { data } = await supabase.from('orders_view').select('*'); 
+    const { data } = await supabase
+      .from('orders_view')
+      .select('*')
+      .order('scheduled_at', { ascending: true }); // Tri chronologique
     setRows((data ?? []) as any); 
   }
 
@@ -81,7 +84,7 @@ export default function OrdersPage() {
     }
   }
 
-  // Séparer prénom et nom
+  // Séparer prénom et nom - version améliorée
   function parseCustomerName(fullName: string) {
     const parts = fullName.trim().split(' ');
     if (parts.length >= 2) {
@@ -89,7 +92,7 @@ export default function OrdersPage() {
       const lastName = parts.slice(1).join(' ');
       return { firstName, lastName };
     }
-    return { firstName: fullName, lastName: '' };
+    return { firstName: '', lastName: fullName };
   }
 
   return (
@@ -145,7 +148,8 @@ export default function OrdersPage() {
                     </span>
                   </div>
                   <div className="text-lg font-medium text-gray-900">
-                    {firstName} <span className="font-normal text-gray-600">{lastName}</span>
+                    {firstName && <span className="font-semibold">{firstName} </span>}
+                    <span className="font-normal text-gray-600">{lastName}</span>
                   </div>
                   {order.customer_phone && (
                     <div className="text-sm text-gray-500">{order.customer_phone}</div>
