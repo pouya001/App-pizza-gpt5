@@ -197,6 +197,13 @@ export default function OrderEdit() {
     }));
   }
 
+  function setCustomPrice(pizzaId: number, price: number) {
+    setCustomPrices(prev => ({
+      ...prev,
+      [pizzaId]: Math.max(0, price)
+    }));
+  }
+
   // Fonction pour sélectionner une date et fermer le picker automatiquement
   function selectDate(date: string) {
     setSelectedDate(date);
