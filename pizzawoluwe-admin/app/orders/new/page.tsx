@@ -235,7 +235,7 @@ export default function NewOrderPage() {
 
       if (orderError) throw orderError;
 
-      alert('Commande créée avec succès !');
+      // Redirection directe sans popup
       router.push('/orders');
 
     } catch (error: any) {
