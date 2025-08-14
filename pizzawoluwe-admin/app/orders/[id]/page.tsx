@@ -59,6 +59,7 @@ export default function OrderEdit() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     loadPizzas();
@@ -189,11 +190,32 @@ export default function OrderEdit() {
     }));
   }
 
-  function setCustomPrice(pizzaId: number, price: number) {
-    setCustomPrices(prev => ({
-      ...prev,
-      [pizzaId]: Math.max(0, price)
-    }));
+  // Fonction pour sélectionner une date et fermer le picker automatiquement
+  function selectDate(date: string) {
+    setSelectedDate(date);
+    setShowDatePicker(false);
+    setSelectedSlot(null); // Reset du créneau sélectionné
+  }
+
+  // Générer les dates pour le picker (aujourd'hui + 30 jours)
+  function generateDateOptions() {
+    const dates = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push({
+        value: date.toISOString().split('T')[0],
+        label: date.toLocaleDateString('fr-FR', { 
+          weekday: 'short', 
+          day: 'numeric', 
+          month: 'short' 
+        })
+      });
+    }
+    
+    return dates;
   }
 
   async function save() {
@@ -315,12 +337,41 @@ export default function OrderEdit() {
           {/* Date et créneaux - IDENTIQUE à nouvelle commande */}
           <div>
             <label className="block text-sm mb-1">Date *</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="input"
-            />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="input w-full text-left bg-white"
+              >
+                {new Date(selectedDate).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </button>
+              
+              {showDatePicker && (
+                <div className="absolute z-20 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {dateOptions.map(date => (
+                    <button
+                      key={date.value}
+                      type="button"
+                      onClick={() => selectDate(date.value)}
+                      className={`w-full px-3 py-2 text-left hover:bg-gray-100 border-b last:border-b-0 ${
+                        selectedDate === date.value ? 'bg-red-50 text-red-600 font-medium' : ''
+                      }`}
+                    >
+                      {new Date(date.value).toLocaleDateString('fr-FR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long'
+                      })}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -465,6 +516,14 @@ export default function OrderEdit() {
           Annuler
         </button>
       </div>
+
+      {/* Overlay pour fermer le date picker en cliquant en dehors */}
+      {showDatePicker && (
+        <div 
+          className="fixed inset-0 z-10" 
+          onClick={() => setShowDatePicker(false)}
+        />
+      )}
     </Shell>
   );
 }
