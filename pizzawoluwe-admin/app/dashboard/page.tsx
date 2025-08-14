@@ -272,10 +272,12 @@ export default function Dashboard() {
                   plugins: {
                     legend: {
                       position: 'bottom',
-                      labels: {
-                        fontSize: 12,
-                        usePointStyle: true
-                      }
+                     labels: {
+  font: {
+    size: 12
+  },
+  usePointStyle: true
+}
                     }
                   }
                 }}
