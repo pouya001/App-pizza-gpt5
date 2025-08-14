@@ -15,6 +15,7 @@ type Pizza = {
 type Client = { 
   id: number; 
   name: string; 
+  first_name: string;
   phone: string; 
   email: string | null; 
 };
@@ -38,20 +39,19 @@ export default function OrderEdit() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id === 'new' ? null : Number(params?.id);
+  const isEdit = id !== null;
   
   const [pizzas, setPizzas] = useState<Pizza[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [order, setOrder] = useState<Order>({ 
     client_id: null, 
     scheduled_at: new Date().toISOString(), 
     status: 'waiting', 
     notes: null 
   });
-  const [items, setItems] = useState<Item[]>([{ 
-    pizza_id: null, 
-    qty: 1, 
-    price_eur: 0 
-  }]);
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [customPrices, setCustomPrices] = useState<Record<number, number>>({});
 
   useEffect(() => {
     (async () => {
@@ -72,58 +72,87 @@ export default function OrderEdit() {
 
       // Si modification, charger la commande existante
       if (id) {
-        const { data } = await supabase
+        const { data: orderData } = await supabase
           .from('orders')
-          .select('*')
+          .select(`
+            *,
+            clients!inner(id, name, first_name, phone, email)
+          `)
           .eq('id', id)
           .single();
 
-        const { data: it } = await supabase
+        const { data: items } = await supabase
           .from('order_items')
           .select('*')
           .eq('order_id', id);
 
-        if (data) setOrder(data as any);
-        if (it) {
-          setItems((it as any).map((x: any) => ({
-            pizza_id: x.pizza_id,
-            qty: x.qty,
-            price_eur: x.price_eur
-          })));
+        if (orderData) {
+          setOrder({
+            id: orderData.id,
+            number: orderData.number,
+            client_id: orderData.client_id,
+            scheduled_at: orderData.scheduled_at,
+            status: orderData.status,
+            notes: orderData.notes
+          });
+          
+          // Le client est fixe en modification
+          setSelectedClient(orderData.clients);
+          
+          // Remplir les quantités et prix
+          const newQuantities: Record<number, number> = {};
+          const newCustomPrices: Record<number, number> = {};
+          
+          items?.forEach(item => {
+            newQuantities[item.pizza_id] = item.qty;
+            newCustomPrices[item.pizza_id] = item.price_eur;
+          });
+          
+          setQuantities(newQuantities);
+          setCustomPrices(newCustomPrices);
         }
       }
     })();
   }, [id]);
 
-  const total = useMemo(() => 
-    items.reduce((s, it) => s + (it.price_eur || 0) * (it.qty || 0), 0), 
-    [items]
-  );
+  // Calculer les items avec quantité > 0
+  const activeItems = useMemo(() => {
+    return pizzas
+      .filter(pizza => quantities[pizza.id] > 0)
+      .map(pizza => ({
+        pizza_id: pizza.id,
+        qty: quantities[pizza.id],
+        price_eur: customPrices[pizza.id] ?? pizza.price_eur
+      }));
+  }, [pizzas, quantities, customPrices]);
 
-  function setItem(idx: number, patch: Partial<Item>) {
-    setItems(prev => prev.map((it, i) => i === idx ? { ...it, ...patch } : it));
+  // Calculer le total
+  const total = useMemo(() => {
+    return activeItems.reduce((sum, item) => sum + (item.price_eur * item.qty), 0);
+  }, [activeItems]);
+
+  function setQuantity(pizzaId: number, qty: number) {
+    setQuantities(prev => ({
+      ...prev,
+      [pizzaId]: Math.max(0, qty)
+    }));
   }
 
-  function addItem() {
-    setItems(prev => [...prev, { pizza_id: null, qty: 1, price_eur: 0 }]);
-  }
-
-  function removeItem(i: number) {
-    setItems(prev => prev.filter((_, idx) => idx !== i));
-  }
-
-  function onPizzaChange(i: number, pizza_id: number) {
-    const p = pizzas.find(p => p.id === pizza_id);
-    setItem(i, { pizza_id, price_eur: p?.price_eur ?? 0 });
+  function setCustomPrice(pizzaId: number, price: number) {
+    setCustomPrices(prev => ({
+      ...prev,
+      [pizzaId]: Math.max(0, price)
+    }));
   }
 
   async function save() {
-    if (!order.client_id) {
+    // Validation pour nouvelle commande
+    if (!isEdit && !order.client_id) {
       alert('Choisissez un client.');
       return;
     }
     
-    if (!items.length || items.some(it => !it.pizza_id)) {
+    if (activeItems.length === 0) {
       alert('Ajoutez au moins une pizza.');
       return;
     }
@@ -131,11 +160,10 @@ export default function OrderEdit() {
     let orderId = id;
 
     if (orderId) {
-      // Modification
+      // Modification - on ne peut pas changer le client
       const { error } = await supabase
         .from('orders')
         .update({
-          client_id: order.client_id,
           scheduled_at: order.scheduled_at,
           status: order.status,
           notes: order.notes,
@@ -155,9 +183,11 @@ export default function OrderEdit() {
         .eq('order_id', orderId);
 
       // Ajouter les nouveaux items
-      await supabase
-        .from('order_items')
-        .insert(items.map(it => ({ order_id: orderId!, ...it })));
+      if (activeItems.length > 0) {
+        await supabase
+          .from('order_items')
+          .insert(activeItems.map(item => ({ order_id: orderId!, ...item })));
+      }
 
     } else {
       // Création
@@ -165,7 +195,7 @@ export default function OrderEdit() {
         p_client_id: order.client_id,
         p_scheduled_at: order.scheduled_at,
         p_notes: order.notes,
-        p_items: items
+        p_items: activeItems
       });
 
       if (error) {
@@ -182,29 +212,42 @@ export default function OrderEdit() {
   return (
     <Shell>
       <h1 className="text-xl font-semibold mb-4">
-        {id ? 'Modifier la commande' : 'Nouvelle commande'}
+        {isEdit ? 'Modifier la commande' : 'Nouvelle commande'}
       </h1>
       
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="card space-y-3">
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Informations de la commande */}
+        <div className="card space-y-4">
+          <h2 className="font-semibold">Informations</h2>
+          
           <div>
             <label className="block text-sm mb-1">Client</label>
-            <select 
-              className="select" 
-              value={order.client_id ?? ''} 
-              onChange={e => setOrder({...order, client_id: Number(e.target.value)})}
-            >
-              <option value="">-- Sélectionner --</option>
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.phone})
-                </option>
-              ))}
-            </select>
+            {isEdit && selectedClient ? (
+              // En modification : affichage readonly du client
+              <div className="input bg-gray-50 cursor-not-allowed">
+                <span className="font-bold">{selectedClient.first_name}</span>{' '}
+                <span className="text-gray-600">{selectedClient.name}</span>{' '}
+                <span className="text-gray-500">({selectedClient.phone})</span>
+              </div>
+            ) : (
+              // En création : sélecteur de client
+              <select 
+                className="select" 
+                value={order.client_id ?? ''} 
+                onChange={e => setOrder({...order, client_id: Number(e.target.value)})}
+              >
+                <option value="">-- Sélectionner un client --</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>
+                    <span className="font-bold">{c.first_name}</span> {c.name} ({c.phone})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           
           <div>
-            <label className="block text-sm mb-1">Date/Heure</label>
+            <label className="block text-sm mb-1">Date/Heure de livraison</label>
             <input 
               className="input" 
               type="datetime-local" 
@@ -217,76 +260,110 @@ export default function OrderEdit() {
           </div>
           
           <div>
+            <label className="block text-sm mb-1">Statut</label>
+            <select 
+              className="select" 
+              value={order.status} 
+              onChange={e => setOrder({...order, status: e.target.value})}
+            >
+              <option value="waiting">En attente</option>
+              <option value="confirmed">Confirmée</option>
+              <option value="preparing">En préparation</option>
+              <option value="ready">Prête</option>
+              <option value="delivered">Livrée</option>
+              <option value="cancelled">Annulée</option>
+            </select>
+          </div>
+          
+          <div>
             <label className="block text-sm mb-1">Notes</label>
             <textarea 
               className="input" 
               rows={3} 
               value={order.notes ?? ''} 
               onChange={e => setOrder({...order, notes: e.target.value})} 
+              placeholder="Informations supplémentaires..."
             />
           </div>
         </div>
         
-        <div className="card space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Pizzas</h2>
-            <button className="btn" onClick={addItem}>+ Ajouter</button>
+        {/* Sélection des pizzas */}
+        <div className="card space-y-4">
+          <h2 className="font-semibold">Pizzas</h2>
+          
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {pizzas.map(pizza => (
+              <div key={pizza.id} className="flex items-center gap-3 p-3 border rounded">
+                <div className="flex-1">
+                  <div className="font-medium">{pizza.name}</div>
+                  <div className="text-sm text-gray-500">Prix de base : {pizza.price_eur.toFixed(2)}€</div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    <button
+                      className="btn w-8 h-8 p-0 text-lg"
+                      onClick={() => setQuantity(pizza.id, (quantities[pizza.id] || 0) - 1)}
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center font-medium">
+                      {quantities[pizza.id] || 0}
+                    </span>
+                    <button
+                      className="btn w-8 h-8 p-0 text-lg"
+                      onClick={() => setQuantity(pizza.id, (quantities[pizza.id] || 0) + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  
+                  {quantities[pizza.id] > 0 && (
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="input w-20"
+                      value={customPrices[pizza.id] ?? pizza.price_eur}
+                      onChange={e => setCustomPrice(pizza.id, Number(e.target.value))}
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
           
-          {items.map((it, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-7">
-                <select 
-                  className="select" 
-                  value={it.pizza_id ?? ''} 
-                  onChange={e => onPizzaChange(i, Number(e.target.value))}
-                >
-                  <option value="">-- Pizza --</option>
-                  {pizzas.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} — {p.price_eur.toFixed(2)}€
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="col-span-2">
-                <input 
-                  className="input" 
-                  type="number" 
-                  min={1} 
-                  max={10} 
-                  value={it.qty} 
-                  onChange={e => setItem(i, { qty: Number(e.target.value) })}
-                />
-              </div>
-              
-              <div className="col-span-2">
-                <input 
-                  className="input" 
-                  type="number" 
-                  min={0} 
-                  step="0.01" 
-                  value={it.price_eur} 
-                  onChange={e => setItem(i, { price_eur: Number(e.target.value) })}
-                />
-              </div>
-              
-              <div className="col-span-1 text-right">
-                <button className="btn" onClick={() => removeItem(i)}>✕</button>
+          {/* Récapitulatif */}
+          {activeItems.length > 0 && (
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-2">Récapitulatif</h3>
+              {activeItems.map(item => {
+                const pizza = pizzas.find(p => p.id === item.pizza_id);
+                return (
+                  <div key={item.pizza_id} className="flex justify-between text-sm">
+                    <span>{pizza?.name} × {item.qty}</span>
+                    <span>{(item.price_eur * item.qty).toFixed(2)}€</span>
+                  </div>
+                );
+              })}
+              <div className="border-t mt-2 pt-2 flex justify-between font-semibold">
+                <span>Total</span>
+                <span>{total.toFixed(2)}€</span>
               </div>
             </div>
-          ))}
-          
-          <div className="text-right font-semibold">
-            Total: {total.toFixed(2)} €
-          </div>
+          )}
         </div>
       </div>
       
-      <div className="mt-4 flex gap-2">
+      <div className="mt-6 flex gap-2">
         <button className="btn btn-primary" onClick={save}>
-          Enregistrer
+          {isEdit ? 'Mettre à jour' : 'Créer la commande'}
+        </button>
+        <button 
+          className="btn" 
+          onClick={() => router.push('/orders')}
+        >
+          Annuler
         </button>
       </div>
     </Shell>
