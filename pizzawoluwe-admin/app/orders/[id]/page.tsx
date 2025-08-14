@@ -1,4 +1,4 @@
- 'use client';
+'use client';
 
 import Shell from '@/src/components/Shell';
 import { supabase } from '@/src/lib/supabaseClient';
@@ -72,6 +72,20 @@ export default function OrderEdit() {
   useEffect(() => {
     loadSlots();
   }, [selectedDate]);
+
+  // Sélectionner automatiquement le créneau existant quand les slots se chargent
+  useEffect(() => {
+    if (isEdit && order.scheduled_at && slots.length > 0 && selectedSlot === null) {
+      const orderTime = new Date(order.scheduled_at);
+      const matchingSlot = slots.find(slot => {
+        const slotTime = new Date(slot.starts_at);
+        return slotTime.getTime() === orderTime.getTime();
+      });
+      if (matchingSlot) {
+        setSelectedSlot(matchingSlot.id);
+      }
+    }
+  }, [slots, order.scheduled_at, isEdit, selectedSlot]);
 
   async function loadPizzas() {
     const { data: p } = await supabase
@@ -153,20 +167,6 @@ export default function OrderEdit() {
     }
   }
 
-  // Sélectionner automatiquement le créneau existant quand les slots se chargent
-  useEffect(() => {
-    if (isEdit && order.scheduled_at && slots.length > 0 && selectedSlot === null) {
-      const orderTime = new Date(order.scheduled_at);
-      const matchingSlot = slots.find(slot => {
-        const slotTime = new Date(slot.starts_at);
-        return slotTime.getTime() === orderTime.getTime();
-      });
-      if (matchingSlot) {
-        setSelectedSlot(matchingSlot.id);
-      }
-    }
-  }, [slots, order.scheduled_at, isEdit, selectedSlot]);
-
   // Calculer les items avec quantité > 0
   const activeItems = useMemo(() => {
     return pizzas
@@ -187,6 +187,13 @@ export default function OrderEdit() {
     setQuantities(prev => ({
       ...prev,
       [pizzaId]: Math.max(0, qty)
+    }));
+  }
+
+  function setCustomPrice(pizzaId: number, price: number) {
+    setCustomPrices(prev => ({
+      ...prev,
+      [pizzaId]: Math.max(0, price)
     }));
   }
 
@@ -530,4 +537,3 @@ export default function OrderEdit() {
     </Shell>
   );
 }
-              
