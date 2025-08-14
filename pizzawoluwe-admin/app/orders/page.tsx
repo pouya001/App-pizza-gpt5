@@ -113,8 +113,10 @@ export default function OrdersPage() {
                     #{order.number}
                   </span>
                   <span className="font-medium">
-                    <span className="font-bold">{order.customer_first_name}</span>{' '}
-                    <span className="text-gray-600">{order.customer_name}</span>
+                    <span className="font-bold">{order.customer_first_name || order.customer_name}</span>
+                    {order.customer_first_name && (
+                      <span className="text-gray-600"> {order.customer_name}</span>
+                    )}
                   </span>
                   {order.customer_phone && (
                     <span className="text-sm text-gray-500">{order.customer_phone}</span>
