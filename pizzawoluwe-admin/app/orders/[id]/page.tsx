@@ -15,7 +15,7 @@ type Pizza = {
 type Client = { 
   id: number; 
   name: string; 
-  first_name: string | null;
+  first_name: string;
   phone: string; 
   email: string | null; 
 };
@@ -29,14 +29,10 @@ type Order = {
   notes: string | null; 
 };
 
-type Slot = {
-  id: number;
-  starts_at: string;
-  max_orders: number;
-  max_pizzas: number;
-  blocked: boolean;
-  orders_count: number;
-  pizzas_count: number;
+type Item = { 
+  pizza_id: number | null; 
+  qty: number; 
+  price_eur: number; 
 };
 
 export default function OrderEdit() {
@@ -56,116 +52,68 @@ export default function OrderEdit() {
   });
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [customPrices, setCustomPrices] = useState<Record<number, number>>({});
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
-    loadPizzas();
-    loadClients();
-    if (isEdit) {
-      loadOrder();
-    }
-  }, [id]);
+    (async () => {
+      // Charger les pizzas
+      const { data: p } = await supabase
+        .from('pizzas')
+        .select('*')
+        .eq('available', true)
+        .order('name');
+      setPizzas(p ?? []);
 
-  useEffect(() => {
-    loadSlots();
-  }, [selectedDate]);
+      // Charger les clients
+      const { data: c } = await supabase
+        .from('clients')
+        .select('*')
+        .order('name');
+      setClients(c ?? []);
 
-  async function loadPizzas() {
-    const { data: p } = await supabase
-      .from('pizzas')
-      .select('*')
-      .eq('available', true)
-      .order('name');
-    setPizzas(p ?? []);
-  }
+      // Si modification, charger la commande existante
+      if (id) {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            clients!inner(id, name, first_name, phone, email)
+          `)
+          .eq('id', id)
+          .single();
 
-  async function loadClients() {
-    const { data: c } = await supabase
-      .from('clients')
-      .select('*')
-      .order('name');
-    setClients(c ?? []);
-  }
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', id);
 
-  async function loadSlots() {
-    const startDate = new Date(selectedDate + 'T00:00:00');
-    const endDate = new Date(selectedDate + 'T23:59:59');
-    
-    const { data } = await supabase
-      .rpc('get_slots_with_usage', {
-        p_from: startDate.toISOString(),
-        p_to: endDate.toISOString()
-      });
-    
-    if (data) {
-      setSlots(data);
-    }
-  }
-
-  async function loadOrder() {
-    if (!id) return;
-
-    const { data: orderData } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        clients!inner(id, name, first_name, phone, email)
-      `)
-      .eq('id', id)
-      .single();
-
-    const { data: items } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', id);
-
-    if (orderData) {
-      setOrder({
-        id: orderData.id,
-        number: orderData.number,
-        client_id: orderData.client_id,
-        scheduled_at: orderData.scheduled_at,
-        status: orderData.status,
-        notes: orderData.notes
-      });
-      
-      // Le client est fixe en modification
-      setSelectedClient(orderData.clients);
-      
-      // Définir la date du créneau existant
-      const orderDate = new Date(orderData.scheduled_at);
-      setSelectedDate(orderDate.toISOString().split('T')[0]);
-      
-      // Remplir les quantités et prix
-      const newQuantities: Record<number, number> = {};
-      const newCustomPrices: Record<number, number> = {};
-      
-      items?.forEach(item => {
-        newQuantities[item.pizza_id] = item.qty;
-        newCustomPrices[item.pizza_id] = item.price_eur;
-      });
-      
-      setQuantities(newQuantities);
-      setCustomPrices(newCustomPrices);
-    }
-  }
-
-  // Sélectionner automatiquement le créneau existant quand les slots se chargent
-  useEffect(() => {
-    if (isEdit && order.scheduled_at && slots.length > 0 && selectedSlot === null) {
-      const orderTime = new Date(order.scheduled_at);
-      const matchingSlot = slots.find(slot => {
-        const slotTime = new Date(slot.starts_at);
-        return slotTime.getTime() === orderTime.getTime();
-      });
-      if (matchingSlot) {
-        setSelectedSlot(matchingSlot.id);
+        if (orderData) {
+          setOrder({
+            id: orderData.id,
+            number: orderData.number,
+            client_id: orderData.client_id,
+            scheduled_at: orderData.scheduled_at,
+            status: orderData.status,
+            notes: orderData.notes
+          });
+          
+          // Le client est fixe en modification
+          setSelectedClient(orderData.clients);
+          
+          // Remplir les quantités et prix
+          const newQuantities: Record<number, number> = {};
+          const newCustomPrices: Record<number, number> = {};
+          
+          items?.forEach(item => {
+            newQuantities[item.pizza_id] = item.qty;
+            newCustomPrices[item.pizza_id] = item.price_eur;
+          });
+          
+          setQuantities(newQuantities);
+          setCustomPrices(newCustomPrices);
+        }
       }
-    }
-  }, [slots, order.scheduled_at, isEdit, selectedSlot]);
+    })();
+  }, [id]);
 
   // Calculer les items avec quantité > 0
   const activeItems = useMemo(() => {
@@ -190,32 +138,11 @@ export default function OrderEdit() {
     }));
   }
 
-  // Fonction pour sélectionner une date et fermer le picker automatiquement
-  function selectDate(date: string) {
-    setSelectedDate(date);
-    setShowDatePicker(false);
-    setSelectedSlot(null); // Reset du créneau sélectionné
-  }
-
-  // Générer les dates pour le picker (aujourd'hui + 30 jours)
-  function generateDateOptions() {
-    const dates = [];
-    const today = new Date();
-    
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push({
-        value: date.toISOString().split('T')[0],
-        label: date.toLocaleDateString('fr-FR', { 
-          weekday: 'short', 
-          day: 'numeric', 
-          month: 'short' 
-        })
-      });
-    }
-    
-    return dates;
+  function setCustomPrice(pizzaId: number, price: number) {
+    setCustomPrices(prev => ({
+      ...prev,
+      [pizzaId]: Math.max(0, price)
+    }));
   }
 
   async function save() {
@@ -225,31 +152,19 @@ export default function OrderEdit() {
       return;
     }
     
-    if (!selectedSlot) {
-      alert('Veuillez sélectionner un créneau.');
-      return;
-    }
-    
     if (activeItems.length === 0) {
       alert('Ajoutez au moins une pizza.');
-      return;
-    }
-
-    // Trouver l'heure du créneau sélectionné
-    const selectedSlotData = slots.find(s => s.id === selectedSlot);
-    if (!selectedSlotData) {
-      alert('Créneau introuvable.');
       return;
     }
 
     let orderId = id;
 
     if (orderId) {
-      // Modification
+      // Modification - on ne peut pas changer le client
       const { error } = await supabase
         .from('orders')
         .update({
-          scheduled_at: selectedSlotData.starts_at,
+          scheduled_at: order.scheduled_at,
           status: order.status,
           notes: order.notes,
           total_eur: total
@@ -278,7 +193,7 @@ export default function OrderEdit() {
       // Création
       const { data, error } = await supabase.rpc('create_order_with_items', {
         p_client_id: order.client_id,
-        p_scheduled_at: selectedSlotData.starts_at,
+        p_scheduled_at: order.scheduled_at,
         p_notes: order.notes,
         p_items: activeItems
       });
@@ -310,10 +225,8 @@ export default function OrderEdit() {
             {isEdit && selectedClient ? (
               // En modification : affichage readonly du client
               <div className="input bg-gray-50 cursor-not-allowed">
-                <span className="font-bold">{selectedClient.first_name || selectedClient.name}</span>
-                {selectedClient.first_name && (
-                  <span className="text-gray-600"> {selectedClient.name}</span>
-                )}{' '}
+                <span className="font-bold">{selectedClient.first_name}</span>{' '}
+                <span className="text-gray-600">{selectedClient.name}</span>{' '}
                 <span className="text-gray-500">({selectedClient.phone})</span>
               </div>
             ) : (
@@ -326,85 +239,24 @@ export default function OrderEdit() {
                 <option value="">-- Sélectionner un client --</option>
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>
-                    <span className="font-bold">{c.first_name || c.name}</span>
-                    {c.first_name && <span> {c.name}</span>} ({c.phone})
+                    <span className="font-bold">{c.first_name}</span> {c.name} ({c.phone})
                   </option>
                 ))}
               </select>
             )}
           </div>
           
-          {/* Date et créneaux - IDENTIQUE à nouvelle commande */}
           <div>
-            <label className="block text-sm mb-1">Date *</label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowDatePicker(!showDatePicker)}
-                className="input w-full text-left bg-white"
-              >
-                {new Date(selectedDate).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </button>
-              
-              {showDatePicker && (
-                <div className="absolute z-20 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                  {dateOptions.map(date => (
-                    <button
-                      key={date.value}
-                      type="button"
-                      onClick={() => selectDate(date.value)}
-                      className={`w-full px-3 py-2 text-left hover:bg-gray-100 border-b last:border-b-0 ${
-                        selectedDate === date.value ? 'bg-red-50 text-red-600 font-medium' : ''
-                      }`}
-                    >
-                      {new Date(date.value).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long'
-                      })}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm mb-2">Créneau *</label>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-              {slots.map(slot => {
-                const time = new Date(slot.starts_at);
-                const isAvailable = !slot.blocked && slot.orders_count < slot.max_orders;
-                
-                return (
-                  <button
-                    key={slot.id}
-                    type="button"
-                    disabled={!isAvailable}
-                    onClick={() => setSelectedSlot(slot.id)}
-                    className={`p-2 text-xs rounded border ${
-                      selectedSlot === slot.id
-                        ? 'bg-red-600 text-white border-red-600'
-                        : isAvailable
-                        ? 'bg-white hover:bg-gray-50 border-gray-300'
-                        : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                    }`}
-                  >
-                    <div className="font-medium">
-                      {time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <div>
-                      {slot.orders_count}/{slot.max_orders} cmd
-                    </div>
-                  </button>
-                );
+            <label className="block text-sm mb-1">Date/Heure de livraison</label>
+            <input 
+              className="input" 
+              type="datetime-local" 
+              value={order.scheduled_at.slice(0, 16)} 
+              onChange={e => setOrder({
+                ...order, 
+                scheduled_at: new Date(e.target.value).toISOString()
               })}
-            </div>
+            />
           </div>
           
           <div>
@@ -435,7 +287,7 @@ export default function OrderEdit() {
           </div>
         </div>
         
-        {/* Sélection des pizzas - IDENTIQUE à nouvelle commande */}
+        {/* Sélection des pizzas */}
         <div className="card space-y-4">
           <h2 className="font-semibold">Pizzas</h2>
           
@@ -450,7 +302,6 @@ export default function OrderEdit() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center">
                     <button
-                      type="button"
                       className="btn w-8 h-8 p-0 text-lg"
                       onClick={() => setQuantity(pizza.id, (quantities[pizza.id] || 0) - 1)}
                     >
@@ -460,7 +311,6 @@ export default function OrderEdit() {
                       {quantities[pizza.id] || 0}
                     </span>
                     <button
-                      type="button"
                       className="btn w-8 h-8 p-0 text-lg"
                       onClick={() => setQuantity(pizza.id, (quantities[pizza.id] || 0) + 1)}
                     >
@@ -516,14 +366,6 @@ export default function OrderEdit() {
           Annuler
         </button>
       </div>
-
-      {/* Overlay pour fermer le date picker en cliquant en dehors */}
-      {showDatePicker && (
-        <div 
-          className="fixed inset-0 z-10" 
-          onClick={() => setShowDatePicker(false)}
-        />
-      )}
     </Shell>
   );
 }
