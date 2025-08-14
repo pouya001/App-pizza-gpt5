@@ -246,7 +246,11 @@ export default function OrderEdit() {
                 <div className="col-span-2">
                   <strong>Préférences:</strong> {selectedClient.preferences}
                 </div>
-              )}
+        </div>
+      </div>
+    </Shell>
+  );
+}      )}
             </div>
           </div>
         </div>
