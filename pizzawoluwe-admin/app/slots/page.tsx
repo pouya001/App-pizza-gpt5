@@ -48,10 +48,7 @@ export default function SlotsPage() {
   function cell(day: Date, time: Date) {
     const s = slots.find(x => {
       const d = new Date(x.starts_at);
-      // Comparer les dates complètes (année, mois, jour) ET l'heure/minute
-      return d.getFullYear() === day.getFullYear() &&
-             d.getMonth() === day.getMonth() &&
-             d.getDate() === day.getDate() &&
+      return d.getDay() === day.getDay() && 
              d.getHours() === time.getHours() && 
              d.getMinutes() === time.getMinutes();
     });
