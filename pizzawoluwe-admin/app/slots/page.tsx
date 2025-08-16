@@ -23,7 +23,27 @@ export default function SlotsPage() {
   async function load() {
     const from = start.toISOString();
     const to = addDays(start, 7).toISOString();
-    const { data } = await supabase.rpc('get_slots_with_usage', { p_from: from, p_to: to });
+    
+    console.log('🔍 DEBUG: Requête slots');
+    console.log('From:', from);
+    console.log('To:', to);
+    
+    const { data, error } = await supabase.rpc('get_slots_with_usage', { p_from: from, p_to: to });
+    
+    console.log('📊 DEBUG: Données reçues:', data);
+    console.log('❌ DEBUG: Erreur:', error);
+    
+    if (data) {
+      // Filtrer et afficher seulement les créneaux d'aujourd'hui pour debug
+      const today = new Date().toISOString().split('T')[0];
+      const todaySlots = data.filter((slot: any) => slot.starts_at.startsWith(today));
+      
+      console.log('📅 DEBUG: Créneaux aujourd\'hui:', todaySlots.map((s: any) => ({
+        heure: new Date(s.starts_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        starts_at: s.starts_at
+      })));
+    }
+    
     setSlots((data ?? []) as any);
   }
 
@@ -34,13 +54,17 @@ export default function SlotsPage() {
   const grid = useMemo(() => {
     const days = [...Array(7)].map((_, i) => addDays(start, i));
     
-    // Base à 11h00
-    const base = set(start, { hours: 11, minutes: 0, seconds: 0, milliseconds: 0 });
+    // Générer les heures de base (11h00 à 23h30)
+    const times = [];
+    for (let hour = 11; hour <= 23; hour++) {
+      times.push(new Date(2000, 0, 1, hour, 0));
+      if (hour < 23) {
+        times.push(new Date(2000, 0, 1, hour, 30));
+      }
+    }
+    times.push(new Date(2000, 0, 1, 23, 30));
     
-    // Générer 26 créneaux (de 11h00 à 23h30 = 12h30 = 25 créneaux + 1)
-    // 11h00 → 23h30 = 12.5 heures × 2 créneaux par heure = 25 créneaux
-    // Mais il faut 26 pour inclure 23h30
-    const times = [...Array(26)].map((_, i) => addMinutes(base, i * 30));
+    console.log('⏰ DEBUG: Heures générées:', times.map(t => t.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })));
     
     return { days, times };
   }, [start]);
@@ -48,9 +72,19 @@ export default function SlotsPage() {
   function cell(day: Date, time: Date) {
     const s = slots.find(x => {
       const d = new Date(x.starts_at);
-      return d.getDay() === day.getDay() && 
+      const match = d.getFullYear() === day.getFullYear() &&
+             d.getMonth() === day.getMonth() &&
+             d.getDate() === day.getDate() &&
              d.getHours() === time.getHours() && 
              d.getMinutes() === time.getMinutes();
+      
+      // Debug pour les créneaux du matin
+      if (time.getHours() >= 11 && time.getHours() <= 12 && day.getDate() === new Date().getDate()) {
+        console.log(`🔍 DEBUG: Recherche créneau ${time.getHours()}:${time.getMinutes().toString().padStart(2, '0')} pour ${day.getDate()}/${day.getMonth() + 1}`);
+        console.log('Slot trouvé:', s ? `${new Date(s.starts_at).toLocaleTimeString('fr-FR')}` : 'NON TROUVÉ');
+      }
+      
+      return match;
     });
 
     if (!s) {
@@ -84,7 +118,7 @@ export default function SlotsPage() {
   return (
     <Shell>
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-semibold">Créneaux</h1>
+        <h1 className="text-xl font-semibold">Créneaux (DEBUG)</h1>
         <div className="space-x-2">
           <button 
             className="btn" 
@@ -107,7 +141,15 @@ export default function SlotsPage() {
         </div>
       </div>
 
-      {/* Grille avec scroll vertical pour afficher tous les créneaux */}
+      {/* Informations de debug */}
+      <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+        <h3 className="font-semibold mb-2">🔍 DEBUG INFO</h3>
+        <p><strong>Semaine début:</strong> {start.toLocaleDateString('fr-FR')}</p>
+        <p><strong>Nombre de slots chargés:</strong> {slots.length}</p>
+        <p><strong>Heures générées:</strong> {grid.times.length} créneaux</p>
+        <p><strong>Console:</strong> Ouvre les outils de développement pour voir les logs détaillés</p>
+      </div>
+
       <div className="overflow-y-auto max-h-[80vh]">
         <div className="grid grid-cols-8 gap-2">
           <div></div>
