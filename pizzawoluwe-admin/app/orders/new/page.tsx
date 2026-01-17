@@ -85,15 +85,27 @@ export default function NewOrderPage() {
   async function loadSlots() {
     const startDate = new Date(selectedDate + 'T00:00:00');
     const endDate = new Date(selectedDate + 'T23:59:59');
-    
-    const { data } = await supabase
+
+    console.log('[loadSlots] Fetching slots for:', { startDate, endDate, selectedDate });
+
+    const { data, error } = await supabase
       .rpc('get_slots_with_usage', {
         p_from: startDate.toISOString(),
         p_to: endDate.toISOString()
       });
-    
+
+    console.log('[loadSlots] Result:', { data, error });
+
+    if (error) {
+      console.error('[loadSlots] Error fetching slots:', error);
+    }
+
     if (data) {
       setSlots(data);
+      console.log('[loadSlots] Slots loaded:', data.length);
+    } else {
+      setSlots([]);
+      console.log('[loadSlots] No slots found');
     }
   }
 
