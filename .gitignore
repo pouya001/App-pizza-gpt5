@@ -16,7 +16,7 @@ out/
 .env.production.local
 
 # Generated CSS
-public/tw.css
+**/public/tw.css
 
 # IDE
 .idea/
