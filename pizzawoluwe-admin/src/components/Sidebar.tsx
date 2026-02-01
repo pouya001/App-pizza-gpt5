@@ -10,6 +10,7 @@ const links = [
   { href: '/clients', label: 'Clients', emoji: '👥' },
   { href: '/pizzas', label: 'Pizzas', emoji: '🍕' },
   { href: '/slots', label: 'Créneaux', emoji: '📅' },
+  { href: '/video-extractor', label: 'Video Extractor', emoji: '🎬' },
   { href: '/settings', label: 'Paramètres', emoji: '⚙️' },
 ];
 
