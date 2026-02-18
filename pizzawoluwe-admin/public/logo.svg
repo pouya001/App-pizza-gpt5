@@ -1,9 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="180" height="40" viewBox="0 0 180 40" fill="none">
-  <!-- Icône flamme + goutte -->
-  <circle cx="20" cy="20" r="18" fill="#1e40af"/>
-  <path d="M20 8 C16 14 13 16 13 21 C13 25.4 16.1 29 20 29 C23.9 29 27 25.4 27 21 C27 16 24 14 20 8Z" fill="#60a5fa"/>
-  <path d="M20 14 C18 17 17 18.5 17 21 C17 23.2 18.3 25 20 25 C21.7 25 23 23.2 23 21 C23 18.5 22 17 20 14Z" fill="white" opacity="0.9"/>
-  <!-- Texte principal -->
-  <text x="46" y="16" font-size="13" font-weight="700" fill="white" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.5">Atmos</text>
-  <text x="46" y="30" font-size="11" font-weight="600" fill="#93c5fd" font-family="Arial, Helvetica, sans-serif" letter-spacing="1.5">TECHNICS</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 80" width="310" height="80">
+  <!-- Losange bleu (haut gauche) -->
+  <g transform="translate(36,28) rotate(45)">
+    <rect x="-22" y="-22" width="44" height="44" rx="9" fill="#82C4DE"/>
+  </g>
+  <!-- Losange orange (bas droite, par-dessus) -->
+  <g transform="translate(57,49) rotate(45)">
+    <rect x="-22" y="-22" width="44" height="44" rx="9" fill="#E8963D"/>
+  </g>
+  <!-- Titre principal -->
+  <text x="96" y="43" font-family="'Arial Black', 'Arial Bold', Arial, sans-serif" font-weight="900" font-size="26" fill="white" letter-spacing="0.3">Atmos Technics</text>
+  <!-- Sous-titre -->
+  <text x="98" y="62" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#94a3b8" letter-spacing="0.5">Plomberie &amp; Chauffage</text>
 </svg>
