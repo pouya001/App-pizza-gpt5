@@ -4,8 +4,8 @@ import '../public/tw.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'ThermoGestion Pro',
-  description: 'Application de gestion pour artisan chauffagiste',
+  title: 'Atmos Technics',
+  description: 'Application de gestion – Plomberie & Chauffage',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

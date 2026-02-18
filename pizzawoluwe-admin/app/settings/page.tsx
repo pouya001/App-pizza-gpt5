@@ -76,7 +76,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="text-xs text-slate-600 text-center">
-          ThermoGestion Pro v1.0 · Artisan chauffagiste
+          Atmos Technics v1.0 · Plomberie &amp; Chauffage
         </div>
       </div>
     </Shell>

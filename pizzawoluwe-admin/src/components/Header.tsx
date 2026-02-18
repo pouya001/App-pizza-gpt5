@@ -31,8 +31,8 @@ export default function Header() {
       justify-between
       z-30
     ">
-      <div className="font-semibold text-slate-100 ml-14 md:ml-0">
-        ThermoGestion Pro 🔥
+      <div className="flex items-center gap-2 ml-14 md:ml-0">
+        <img src="/logo.svg" alt="Atmos Technics" className="h-7 w-auto" />
       </div>
       <div className="flex items-center gap-3">
         <div className="text-xs text-slate-400 hidden sm:block">{email}</div>

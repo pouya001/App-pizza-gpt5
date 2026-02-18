@@ -48,13 +48,7 @@ export default function Sidebar() {
       )}>
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 mt-14 md:mt-0">
-          <div className="h-10 w-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-            🔥
-          </div>
-          <div>
-            <div className="font-bold text-white text-sm leading-tight">ThermoGestion</div>
-            <div className="text-xs text-orange-400 font-medium">Pro</div>
-          </div>
+          <img src="/logo.svg" alt="Atmos Technics" className="h-10 w-auto" />
         </div>
 
         {/* Navigation */}
@@ -81,7 +75,7 @@ export default function Sidebar() {
 
         {/* Version */}
         <div className="text-xs text-slate-600 text-center mt-4">
-          ThermoGestion Pro v1.0
+          Atmos Technics v1.0
         </div>
       </aside>
     </>
