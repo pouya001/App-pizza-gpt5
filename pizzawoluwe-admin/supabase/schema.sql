@@ -1,117 +1,287 @@
+-- ============================================================
+-- ThermoGestion Pro – Schéma Supabase (PostgreSQL)
+-- Application de gestion pour artisan chauffagiste indépendant
+-- ============================================================
 
--- Run this in Supabase SQL editor
-create table if not exists clients (
-  id bigserial primary key,
-  name text not null,
-  phone text not null unique,
-  email text,
-  created_at timestamptz not null default now()
+-- Nettoyage des anciennes tables (pizza app)
+DROP TABLE IF EXISTS order_items CASCADE;
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS pizzas CASCADE;
+DROP TABLE IF EXISTS slots CASCADE;
+DROP TABLE IF EXISTS clients CASCADE;
+DROP TABLE IF EXISTS intervention_photos CASCADE;
+DROP TABLE IF EXISTS combustion_measures CASCADE;
+DROP TABLE IF EXISTS intervention_items CASCADE;
+DROP TABLE IF EXISTS interventions CASCADE;
+DROP TABLE IF EXISTS quote_items CASCADE;
+DROP TABLE IF EXISTS quotes CASCADE;
+DROP TABLE IF EXISTS catalog_items CASCADE;
+DROP TABLE IF EXISTS buildings CASCADE;
+
+-- ============================================================
+-- TABLE: clients (CRM – Fiches clients)
+-- ============================================================
+CREATE TABLE clients (
+  id            bigserial PRIMARY KEY,
+  first_name    text,
+  last_name     text NOT NULL,
+  phone         text,
+  email         text,
+  notes         text,
+  created_at    timestamptz DEFAULT now() NOT NULL
 );
-create table if not exists pizzas (
-  id bigserial primary key,
-  name text not null unique,
-  description text not null,
-  price_eur numeric(10,2) not null check (price_eur >= 0),
-  available boolean not null default true,
-  created_at timestamptz not null default now()
+
+-- ============================================================
+-- TABLE: buildings (Lieux / Adresses des bâtiments)
+-- Un client peut avoir plusieurs bâtiments.
+-- L'année de construction détermine la TVA: >10 ans → 6%, sinon 21%.
+-- ============================================================
+CREATE TABLE buildings (
+  id                  bigserial PRIMARY KEY,
+  client_id           bigint REFERENCES clients(id) ON DELETE CASCADE NOT NULL,
+  label               text DEFAULT 'Principal',
+  address             text NOT NULL,
+  city                text NOT NULL,
+  postal_code         text,
+  construction_year   int,           -- Clé pour le calcul TVA automatique
+  boiler_brand        text,          -- Marque chaudière
+  boiler_model        text,          -- Modèle chaudière
+  boiler_serial       text,          -- Numéro de série
+  boiler_type         text,          -- condensation | atmospherique | sol | mural
+  boiler_power        numeric(8,2),  -- Puissance nominale (kW)
+  gas_contract        text,          -- N° contrat gaz / compteur
+  notes               text,
+  created_at          timestamptz DEFAULT now() NOT NULL
 );
-do $$ begin
-  create type order_status as enum ('waiting','confirmed','preparing','ready','delivered','cancelled');
-exception when duplicate_object then null; end $$;
-create table if not exists orders (
-  id bigserial primary key,
-  number text not null unique,
-  client_id bigint not null references clients(id),
-  scheduled_at timestamptz not null,
-  status order_status not null default 'waiting',
-  total_eur numeric(10,2) not null default 0,
-  notes text,
-  created_at timestamptz not null default now()
+
+-- ============================================================
+-- TABLE: catalog_items (Catalogue : pièces, services, déplacements)
+-- ============================================================
+CREATE TABLE catalog_items (
+  id              bigserial PRIMARY KEY,
+  type            text CHECK (type IN ('part', 'service', 'travel')) NOT NULL,
+  reference       text,
+  barcode         text,
+  name            text NOT NULL,
+  description     text,
+  purchase_price  numeric(10,2),
+  sale_price      numeric(10,2) NOT NULL,
+  stock           int DEFAULT 0,
+  unit            text DEFAULT 'pce',    -- pce, h, forfait, m, L, kg
+  active          boolean DEFAULT true,
+  created_at      timestamptz DEFAULT now() NOT NULL
 );
-create table if not exists order_items (
-  id bigserial primary key,
-  order_id bigint not null references orders(id) on delete cascade,
-  pizza_id bigint not null references pizzas(id),
-  qty int not null default 1 check (qty > 0),
-  price_eur numeric(10,2) not null check (price_eur >= 0)
+
+-- ============================================================
+-- TABLE: quotes (Devis / Dossiers commerciaux)
+-- Créé sans date d'intervention obligatoire.
+-- ============================================================
+CREATE TABLE quotes (
+  id            bigserial PRIMARY KEY,
+  number        text UNIQUE,
+  client_id     bigint REFERENCES clients(id),
+  building_id   bigint REFERENCES buildings(id),
+  status        text DEFAULT 'draft'
+                  CHECK (status IN ('draft','sent','accepted','rejected')),
+  vat_rate      numeric(5,2) DEFAULT 21,    -- Calculé automatiquement (6 ou 21%)
+  subtotal      numeric(10,2) DEFAULT 0,
+  vat_amount    numeric(10,2) DEFAULT 0,
+  total         numeric(10,2) DEFAULT 0,
+  notes         text,
+  valid_until   date,
+  created_at    timestamptz DEFAULT now() NOT NULL
 );
-create table if not exists slots (
-  id bigserial primary key,
-  starts_at timestamptz not null,
-  max_orders int not null default 3,
-  max_pizzas int not null default 6,
-  blocked boolean not null default false,
-  reason text
+
+-- ============================================================
+-- TABLE: quote_items (Lignes de devis)
+-- ============================================================
+CREATE TABLE quote_items (
+  id                bigserial PRIMARY KEY,
+  quote_id          bigint REFERENCES quotes(id) ON DELETE CASCADE NOT NULL,
+  catalog_item_id   bigint REFERENCES catalog_items(id),
+  description       text NOT NULL,
+  quantity          numeric(10,2) DEFAULT 1,
+  unit_price        numeric(10,2) NOT NULL,
+  unit              text DEFAULT 'pce'
 );
-create index if not exists idx_slots_starts_at on slots(starts_at);
-create or replace view orders_view as
-select o.id, o.number, c.name as customer_name, c.phone as customer_phone,
-       o.scheduled_at, o.status::text as status,
-       (
-         select string_agg(q, ', ')
-         from (
-           select (oi.qty || 'x ' || p.name) as q
-           from order_items oi join pizzas p on p.id = oi.pizza_id
-           where oi.order_id = o.id order by oi.id
-         ) s
-       ) as items_text, o.total_eur, o.created_at
-from orders o join clients c on c.id = o.client_id;
-create or replace view clients_stats_view as
-select c.*,
-       (select min(o.created_at) from orders o where o.client_id = c.id) as first_order_at,
-       (select max(o.created_at) from orders o where o.client_id = c.id) as last_order_at,
-       (select count(*) from orders o where o.client_id = c.id) as orders_count,
-       coalesce((select sum(o.total_eur) from orders o where o.client_id = c.id), 0) as total_spent
-from clients c;
-create or replace function next_order_number() returns text language sql as $$
-  select to_char((select coalesce(max(id),0)+1 from orders), 'FM000');
-$$;
-create or replace function create_order_with_items(
-  p_client_id bigint, p_scheduled_at timestamptz, p_notes text, p_items jsonb
-) returns orders as $$
-declare new_order orders; total numeric(10,2) := 0; item jsonb;
-begin
-  insert into orders(number, client_id, scheduled_at, notes)
-  values (next_order_number(), p_client_id, p_scheduled_at, p_notes)
-  returning * into new_order;
-  for item in select * from jsonb_array_elements(p_items) loop
-    insert into order_items(order_id, pizza_id, qty, price_eur)
-    values (new_order.id, (item->>'pizza_id')::bigint, (item->>'qty')::int, (item->>'price_eur')::numeric);
-  end loop;
-  select coalesce(sum(qty*price_eur),0) into total from order_items where order_id = new_order.id;
-  update orders set total_eur = total where id = new_order.id;
-  select * into new_order from orders where id = new_order.id; return new_order;
-end; $$ language plpgsql;
-create or replace function dashboard_stats() returns json language plpgsql as $$
-declare today date := current_date; next2h timestamptz := now() + interval '2 hours';
-  _todayOrders int; _todayRevenue numeric(10,2); _waiting int; _nextTwoHours int;
-begin
-  select count(*), coalesce(sum(total_eur),0) into _todayOrders, _todayRevenue from orders where created_at::date = today;
-  select count(*) into _waiting from orders where status='waiting';
-  select count(*) into _nextTwoHours from orders where scheduled_at <= next2h and status in ('waiting','confirmed','preparing');
-  return json_build_object('todayOrders', _todayOrders,'todayRevenue', _todayRevenue,'waiting', _waiting,'nextTwoHours', _nextTwoHours);
-end; $$;
-create or replace function get_slots_with_usage(p_from timestamptz, p_to timestamptz)
-returns table ( id bigint, starts_at timestamptz, max_orders int, max_pizzas int, blocked boolean, reason text, orders_count int, pizzas_count int )
-language sql as $$
-  select s.id, s.starts_at, s.max_orders, s.max_pizzas, s.blocked, s.reason,
-         coalesce((select count(*) from orders o where o.scheduled_at = s.starts_at), 0) as orders_count,
-         coalesce((select sum(oi.qty) from orders o join order_items oi on oi.order_id = o.id where o.scheduled_at = s.starts_at), 0) as pizzas_count
-  from slots s where s.starts_at between p_from and p_to order by s.starts_at;
-$$;
-alter publication supabase_realtime add table orders;
-alter table clients enable row level security;
-alter table pizzas enable row level security;
-alter table orders enable row level security;
-alter table order_items enable row level security;
-alter table slots enable row level security;
-create policy "auth read all" on clients for select using (auth.role() = 'authenticated');
-create policy "auth write" on clients for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth read all p" on pizzas for select using (auth.role() = 'authenticated');
-create policy "auth write p" on pizzas for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth read all o" on orders for select using (auth.role() = 'authenticated');
-create policy "auth write o" on orders for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth read all oi" on order_items for select using (auth.role() = 'authenticated');
-create policy "auth write oi" on order_items for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth read all s" on slots for select using (auth.role() = 'authenticated');
-create policy "auth write s" on slots for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+
+-- ============================================================
+-- TABLE: interventions (Actes techniques planifiés)
+-- Types: maintenance (entretien), repair (dépannage), installation
+-- ============================================================
+CREATE TABLE interventions (
+  id                  bigserial PRIMARY KEY,
+  number              text UNIQUE,
+  quote_id            bigint REFERENCES quotes(id),
+  client_id           bigint REFERENCES clients(id) NOT NULL,
+  building_id         bigint REFERENCES buildings(id),
+  type                text CHECK (type IN ('maintenance','repair','installation')) NOT NULL,
+  status              text DEFAULT 'planned'
+                        CHECK (status IN ('planned','in_progress','completed','cancelled')),
+  scheduled_at        timestamptz,         -- Facultatif à la création d'un devis
+  completed_at        timestamptz,
+  technician_notes    text,
+  client_signature    text,                -- Base64 de la signature tactile client
+  vat_rate            numeric(5,2) DEFAULT 21,
+  subtotal            numeric(10,2) DEFAULT 0,
+  vat_amount          numeric(10,2) DEFAULT 0,
+  total               numeric(10,2) DEFAULT 0,
+  created_at          timestamptz DEFAULT now() NOT NULL
+);
+
+-- ============================================================
+-- TABLE: combustion_measures (Analyse de combustion)
+-- Rendement calculé par formule de Siegert (DIN 4702).
+-- Conformité selon normes bruxelloises.
+-- ============================================================
+CREATE TABLE combustion_measures (
+  id                  bigserial PRIMARY KEY,
+  intervention_id     bigint REFERENCES interventions(id) ON DELETE CASCADE NOT NULL,
+  flue_temp           numeric(6,1),             -- Température fumées Tg (°C)
+  ambient_temp        numeric(6,1) DEFAULT 20,  -- Température air comburant Tl (°C)
+  o2_rate             numeric(5,2),             -- O₂ (%)
+  co_ppm              numeric(8,1),             -- CO (ppm)
+  co2_rate            numeric(5,2),             -- CO₂ (%)
+  lambda              numeric(5,3),             -- Coefficient d'excès d'air λ
+  efficiency          numeric(5,2),             -- Rendement η calculé Siegert (%)
+  conformity_status   text CHECK (conformity_status IN ('green','orange','red')),
+  measured_at         timestamptz DEFAULT now() NOT NULL
+);
+
+-- ============================================================
+-- TABLE: intervention_items (Pièces et services utilisés)
+-- ============================================================
+CREATE TABLE intervention_items (
+  id                bigserial PRIMARY KEY,
+  intervention_id   bigint REFERENCES interventions(id) ON DELETE CASCADE NOT NULL,
+  catalog_item_id   bigint REFERENCES catalog_items(id),
+  description       text NOT NULL,
+  quantity          numeric(10,2) DEFAULT 1,
+  unit_price        numeric(10,2) NOT NULL,
+  unit              text DEFAULT 'pce'
+);
+
+-- ============================================================
+-- TABLE: intervention_photos (Photos avant / après chantier)
+-- ============================================================
+CREATE TABLE intervention_photos (
+  id                bigserial PRIMARY KEY,
+  intervention_id   bigint REFERENCES interventions(id) ON DELETE CASCADE NOT NULL,
+  data_url          text NOT NULL,      -- base64 data URL ou lien Supabase Storage
+  type              text DEFAULT 'other' CHECK (type IN ('before','after','other')),
+  caption           text,
+  created_at        timestamptz DEFAULT now() NOT NULL
+);
+
+-- ============================================================
+-- ROW LEVEL SECURITY
+-- ============================================================
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE buildings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE catalog_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interventions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE combustion_measures ENABLE ROW LEVEL SECURITY;
+ALTER TABLE intervention_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE intervention_photos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_all" ON clients             FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON buildings           FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON catalog_items       FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON quotes              FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON quote_items         FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON interventions       FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON combustion_measures FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON intervention_items  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "auth_all" ON intervention_photos FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- ============================================================
+-- FONCTIONS
+-- ============================================================
+
+-- Génération numéro devis (D-0001, D-0002, ...)
+CREATE OR REPLACE FUNCTION next_quote_number()
+RETURNS text AS $$
+DECLARE v_num int;
+BEGIN
+  SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 3) AS int)), 0) + 1
+  INTO v_num FROM quotes WHERE number ~ '^D-[0-9]+$';
+  RETURN 'D-' || LPAD(v_num::text, 4, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Génération numéro intervention (I-0001, I-0002, ...)
+CREATE OR REPLACE FUNCTION next_intervention_number()
+RETURNS text AS $$
+DECLARE v_num int;
+BEGIN
+  SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 3) AS int)), 0) + 1
+  INTO v_num FROM interventions WHERE number ~ '^I-[0-9]+$';
+  RETURN 'I-' || LPAD(v_num::text, 4, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+-- Recalcul total intervention
+CREATE OR REPLACE FUNCTION recalc_intervention_total(p_id bigint)
+RETURNS void AS $$
+DECLARE v_sub numeric; v_vat numeric; v_rate numeric;
+BEGIN
+  SELECT COALESCE(SUM(quantity * unit_price), 0) INTO v_sub
+  FROM intervention_items WHERE intervention_id = p_id;
+  SELECT vat_rate INTO v_rate FROM interventions WHERE id = p_id;
+  v_vat := ROUND(v_sub * v_rate / 100, 2);
+  UPDATE interventions SET subtotal=v_sub, vat_amount=v_vat, total=v_sub+v_vat WHERE id=p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Recalcul total devis
+CREATE OR REPLACE FUNCTION recalc_quote_total(p_id bigint)
+RETURNS void AS $$
+DECLARE v_sub numeric; v_vat numeric; v_rate numeric;
+BEGIN
+  SELECT COALESCE(SUM(quantity * unit_price), 0) INTO v_sub
+  FROM quote_items WHERE quote_id = p_id;
+  SELECT vat_rate INTO v_rate FROM quotes WHERE id = p_id;
+  v_vat := ROUND(v_sub * v_rate / 100, 2);
+  UPDATE quotes SET subtotal=v_sub, vat_amount=v_vat, total=v_sub+v_vat WHERE id=p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- VUES
+-- ============================================================
+
+-- Vue enrichie des interventions
+CREATE OR REPLACE VIEW interventions_view AS
+SELECT
+  i.id, i.number, i.type, i.status,
+  i.scheduled_at, i.completed_at,
+  i.total, i.subtotal, i.vat_rate, i.vat_amount,
+  i.technician_notes, i.created_at,
+  c.first_name || ' ' || c.last_name AS client_name,
+  c.phone AS client_phone,
+  c.email AS client_email,
+  b.label AS building_label,
+  b.address AS building_address,
+  b.city AS building_city,
+  b.construction_year,
+  b.boiler_brand, b.boiler_model, b.boiler_serial
+FROM interventions i
+LEFT JOIN clients c ON c.id = i.client_id
+LEFT JOIN buildings b ON b.id = i.building_id;
+
+-- Vue enrichie des devis
+CREATE OR REPLACE VIEW quotes_view AS
+SELECT
+  q.id, q.number, q.status,
+  q.vat_rate, q.subtotal, q.vat_amount, q.total,
+  q.notes, q.valid_until, q.created_at,
+  c.first_name || ' ' || c.last_name AS client_name,
+  c.phone AS client_phone,
+  b.address AS building_address,
+  b.city AS building_city,
+  b.construction_year
+FROM quotes q
+LEFT JOIN clients c ON c.id = q.client_id
+LEFT JOIN buildings b ON b.id = q.building_id;

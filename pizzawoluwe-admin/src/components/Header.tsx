@@ -24,25 +24,20 @@ export default function Header() {
       top-0 
       h-14 
       border-b 
-      bg-white 
-      px-4 md:px-6 
-      flex 
-      items-center 
-      justify-between 
+      bg-slate-900 border-slate-700
+      px-4 md:px-6
+      flex
+      items-center
+      justify-between
       z-30
     ">
-      {/* Titre (centré sur mobile, à gauche sur desktop) */}
-      <div className="font-semibold text-gray-800 ml-12 md:ml-0">
-        Admin
+      <div className="font-semibold text-slate-100 ml-14 md:ml-0">
+        ThermoGestion Pro 🔥
       </div>
-
-      {/* Infos utilisateur */}
-      <div className="flex items-center gap-2 md:gap-4">
-        <div className="text-xs md:text-sm text-gray-600 hidden sm:block">
-          {email}
-        </div>
-        <button 
-          className="text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+      <div className="flex items-center gap-3">
+        <div className="text-xs text-slate-400 hidden sm:block">{email}</div>
+        <button
+          className="text-xs px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors"
           onClick={logout}
         >
           Déconnexion

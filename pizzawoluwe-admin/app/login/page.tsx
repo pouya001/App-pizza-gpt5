@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -7,73 +6,69 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
-  setErr(null);
-  console.log('[login] submit clicked');
-
-  setLoading(true);
-
-// DEBUG - Ajoutez ces 3 lignes
-console.log('[DEBUG] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log('[DEBUG] Credentials:', { email, password });
-console.log('[DEBUG] Supabase client:', supabase);
-
-const { data, error } = await supabase.auth.signInWithPassword({
-  email,
-  password,
-});
+    e.preventDefault();
+    setErr(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-
-    console.log('[login] result', { data, error });
-
-    if (error) {
-      setErr(error.message);
-      return;
-    }
-    router.replace('/dashboard'); // redirection
+    if (error) { setErr(error.message); return; }
+    router.replace('/dashboard');
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-gray-50">
-      <form onSubmit={onSubmit} className="w-full max-w-sm bg-white p-6 rounded-xl shadow">
-        <div className="text-center font-semibold text-red-600 mb-4">PizzaWoluwe</div>
-        <h1 className="text-center text-lg mb-4">Connexion</h1>
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-6">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-2xl text-3xl mb-4">
+            🔥
+          </div>
+          <h1 className="text-2xl font-bold text-white">ThermoGestion Pro</h1>
+          <p className="text-slate-400 text-sm mt-1">Gestion artisan chauffagiste</p>
+        </div>
 
-        <label className="text-sm">Email</label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border rounded p-2 mb-3"
-        />
+        <form onSubmit={onSubmit} className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+            <input
+              type="email" required
+              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-base"
+              placeholder="artisan@exemple.be"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Mot de passe</label>
+            <input
+              type="password" required
+              className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-base"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <label className="text-sm">Mot de passe</label>
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded p-2 mb-4"
-        />
+          {err && (
+            <div className="bg-red-900/40 border border-red-600 text-red-300 text-sm rounded-xl px-4 py-3">
+              {err}
+            </div>
+          )}
 
-        {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-red-600 text-white rounded p-2 disabled:opacity-50"
-        >
-          {loading ? 'Connexion…' : 'Se connecter'}
-        </button>
-      </form>
+          <button
+            type="submit" disabled={loading}
+            className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-base transition-colors min-h-[48px]"
+          >
+            {loading ? 'Connexion…' : 'Se connecter'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

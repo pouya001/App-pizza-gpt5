@@ -1,22 +1,67 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-white text-gray-900; }
-.badge { @apply px-2 py-0.5 rounded-full text-xs font-medium; }
-.badge-waiting { @apply badge bg-yellow-100 text-yellow-800; }
-.badge-confirmed { @apply badge bg-blue-100 text-blue-800; }
-.badge-prep { @apply badge bg-orange-100 text-orange-800; }
-.badge-ready { @apply badge bg-green-100 text-green-800; }
-.badge-delivered { @apply badge bg-emerald-100 text-emerald-800; }
-.badge-cancelled { @apply badge bg-red-100 text-red-800; }
-.card { @apply bg-white rounded-2xl shadow p-4; }
-.btn { @apply inline-flex items-center justify-center px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition; }
-.btn-primary { @apply bg-primary text-white border-primary hover:opacity-90; }
-.input { @apply w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary; }
-.select { @apply w-full px-3 py-2 border rounded-lg bg-white; }
-.table { @apply w-full text-left border-separate border-spacing-y-2; }
-th { @apply text-xs uppercase text-gray-500; }
-td { @apply text-sm; }
-.sidebar-link { @apply flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100; }
+/* ============================================================
+   ThermoGestion Pro – Thème sombre haute-contraste
+   Optimisé pour usage mobile sur chantier (Android)
+   ============================================================ */
+
+body {
+  @apply bg-slate-900 text-slate-100;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Boutons larges ("Fat Buttons") – cibles tactiles minimum 48px */
+.btn {
+  @apply inline-flex items-center justify-center gap-2
+         px-4 py-3 min-h-[48px] rounded-xl font-medium
+         transition-all active:scale-95 select-none;
+}
+.btn-primary   { @apply bg-orange-500 text-white hover:bg-orange-400; }
+.btn-secondary { @apply bg-slate-700 text-slate-100 hover:bg-slate-600 border border-slate-600; }
+.btn-danger    { @apply bg-red-700 text-white hover:bg-red-600; }
+.btn-ghost     { @apply bg-transparent text-slate-300 hover:bg-slate-800 border border-slate-700; }
+.btn-success   { @apply bg-green-700 text-white hover:bg-green-600; }
+
+/* Champs de saisie larges */
+.input {
+  @apply w-full px-4 py-3 min-h-[48px] rounded-xl
+         bg-slate-800 border border-slate-600 text-slate-100
+         placeholder-slate-500 text-base
+         focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500;
+}
+.input-num { @apply input text-xl font-mono text-right tracking-wider; }
+.select    { @apply input appearance-none; }
+textarea.input { @apply min-h-[96px] resize-y; }
+
+/* Cartes */
+.card       { @apply bg-slate-800 rounded-2xl border border-slate-700 p-4; }
+.card-hover { @apply card hover:border-orange-500/50 transition-colors cursor-pointer; }
+
+/* Badges statuts */
+.badge             { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+.badge-planned     { @apply badge bg-blue-900 text-blue-300; }
+.badge-in_progress { @apply badge bg-amber-900 text-amber-300; }
+.badge-completed   { @apply badge bg-green-900 text-green-300; }
+.badge-cancelled   { @apply badge bg-slate-700 text-slate-400; }
+.badge-draft       { @apply badge bg-slate-700 text-slate-300; }
+.badge-sent        { @apply badge bg-blue-900 text-blue-300; }
+.badge-accepted    { @apply badge bg-green-900 text-green-300; }
+.badge-rejected    { @apply badge bg-red-900 text-red-300; }
+
+/* Conformité combustion */
+.conformity-green  { @apply bg-green-900/40 border border-green-500 text-green-300 rounded-2xl p-4; }
+.conformity-orange { @apply bg-amber-900/40 border border-amber-500 text-amber-300 rounded-2xl p-4; }
+.conformity-red    { @apply bg-red-900/40 border border-red-500 text-red-300 rounded-2xl p-4; }
+
+/* Navigation */
+.sidebar-link        { @apply flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-colors hover:bg-slate-700/60 text-slate-300; }
+.sidebar-link-active { @apply sidebar-link bg-orange-500/20 text-orange-400 border border-orange-500/30; }
+
+/* Divers */
+.divider       { @apply border-t border-slate-700 my-4; }
+.section-title { @apply text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3; }
+label          { @apply block text-sm font-medium text-slate-300 mb-1.5; }
+.tbl-th        { @apply text-xs font-semibold uppercase tracking-wide text-slate-500 pb-2; }
+.tbl-td        { @apply py-3 text-sm border-t border-slate-700/50; }

@@ -5,74 +5,84 @@ import { useState } from 'react';
 import clsx from 'clsx';
 
 const links = [
-  { href: '/dashboard', label: 'Dashboard', emoji: '🏠' },
-  { href: '/orders', label: 'Commandes', emoji: '📋' },
-  { href: '/clients', label: 'Clients', emoji: '👥' },
-  { href: '/pizzas', label: 'Pizzas', emoji: '🍕' },
-  { href: '/slots', label: 'Créneaux', emoji: '📅' },
-  { href: '/settings', label: 'Paramètres', emoji: '⚙️' },
+  { href: '/dashboard',     label: 'Tableau de bord', icon: '📊' },
+  { href: '/interventions', label: 'Interventions',    icon: '🔧' },
+  { href: '/quotes',        label: 'Devis',            icon: '📋' },
+  { href: '/clients',       label: 'Clients',          icon: '👥' },
+  { href: '/catalog',       label: 'Catalogue',        icon: '🗄️' },
+  { href: '/settings',      label: 'Paramètres',       icon: '⚙️' },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      {/* Menu burger (visible uniquement sur mobile) */}
+      {/* Burger mobile */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border"
-        aria-label="Toggle menu"
+        onClick={() => setOpen(!open)}
+        className="md:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-slate-800 border border-slate-600 rounded-xl flex items-center justify-center shadow-lg"
+        aria-label="Menu"
       >
-        <div className="w-5 h-5 flex flex-col justify-center space-y-1">
-          <span className={`block h-0.5 w-5 bg-gray-600 transition-transform ${isOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
-          <span className={`block h-0.5 w-5 bg-gray-600 transition-opacity ${isOpen ? 'opacity-0' : ''}`}></span>
-          <span className={`block h-0.5 w-5 bg-gray-600 transition-transform ${isOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
+        <div className="flex flex-col gap-1.5">
+          <span className={`block h-0.5 w-5 bg-slate-300 transition-transform ${open ? 'rotate-45 translate-y-2' : ''}`} />
+          <span className={`block h-0.5 w-5 bg-slate-300 transition-opacity ${open ? 'opacity-0' : ''}`} />
+          <span className={`block h-0.5 w-5 bg-slate-300 transition-transform ${open ? '-rotate-45 -translate-y-2' : ''}`} />
         </div>
       </button>
 
-      {/* Overlay pour mobile */}
-      {isOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsOpen(false)}
+      {/* Overlay mobile */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={() => setOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={clsx(
-        'fixed left-0 top-0 h-screen w-64 border-r bg-white p-4 z-50 transition-transform duration-300',
-        // Desktop: toujours visible
+        'fixed left-0 top-0 h-screen w-64 bg-slate-900 border-r border-slate-700 p-4 z-50 flex flex-col transition-transform duration-300',
         'md:translate-x-0',
-        // Mobile: cachée par défaut, visible si isOpen
-        isOpen ? 'translate-x-0' : '-translate-x-full'
+        open ? 'translate-x-0' : '-translate-x-full'
       )}>
-        {/* Logo et titre */}
-        <div className="flex items-center gap-2 mb-6 mt-12 md:mt-0">
-          <div className="h-8 w-8 bg-red-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-            PW
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-8 mt-14 md:mt-0">
+          <div className="h-10 w-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+            🔥
           </div>
-          <span className="font-semibold text-gray-800">PizzaWoluwe</span>
+          <div>
+            <div className="font-bold text-white text-sm leading-tight">ThermoGestion</div>
+            <div className="text-xs text-orange-400 font-medium">Pro</div>
+          </div>
         </div>
 
         {/* Navigation */}
-        <nav className="space-y-1">
-          {links.map((l) => (
-            <Link 
-              key={l.href} 
-              href={l.href} 
-              onClick={() => setIsOpen(false)} // Ferme le menu sur mobile après clic
-              className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-gray-100',
-                pathname.startsWith(l.href) && 'bg-red-100 text-red-700 font-semibold'
-              )}
-            >
-              <span className="text-lg">{l.emoji}</span>
-              <span>{l.label}</span>
-            </Link>
-          ))}
+        <nav className="space-y-1 flex-1">
+          {links.map((l) => {
+            const active = l.href === '/dashboard'
+              ? pathname === '/dashboard'
+              : pathname.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className={clsx(
+                  active ? 'sidebar-link-active' : 'sidebar-link'
+                )}
+              >
+                <span className="text-xl w-7 shrink-0">{l.icon}</span>
+                <span>{l.label}</span>
+              </Link>
+            );
+          })}
         </nav>
+
+        {/* Version */}
+        <div className="text-xs text-slate-600 text-center mt-4">
+          ThermoGestion Pro v1.0
+        </div>
       </aside>
     </>
   );
