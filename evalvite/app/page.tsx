@@ -1,20 +1,47 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { UploadZone } from '@/components/upload/UploadZone';
 import { GeneratingScreen } from '@/components/GeneratingScreen';
 import { EvaluationView } from '@/components/evaluation/EvaluationView';
 import type { UploadedFile, Evaluation } from '@/lib/types';
 
+const STORAGE_KEY = 'evalvite_last_evaluation';
+
+function saveEvaluation(ev: Evaluation) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ev)); } catch {}
+}
+
+function loadEvaluation(): Evaluation | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Evaluation) : null;
+  } catch { return null; }
+}
+
+function clearEvaluation() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+}
+
 type Step = 'upload' | 'generating' | 'result';
 
 export default function HomePage() {
+  // Initialise depuis localStorage au montage pour survivre aux rechargements
   const [step, setStep] = useState<Step>('upload');
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [hint, setHint] = useState('');
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Restaure le dernier résultat si la page a été rechargée pendant/après la génération
+  useEffect(() => {
+    const saved = loadEvaluation();
+    if (saved) {
+      setEvaluation(saved);
+      setStep('result');
+    }
+  }, []);
 
   async function handleGenerate() {
     if (files.length === 0) return;
@@ -41,6 +68,9 @@ export default function HomePage() {
       }
 
       const body = (await res.json()) as { evaluation: Evaluation };
+
+      // Sauvegarde immédiate → survive au rechargement de la page
+      saveEvaluation(body.evaluation);
       setEvaluation(body.evaluation);
       setStep('result');
     } catch (err) {
@@ -59,6 +89,7 @@ export default function HomePage() {
   }
 
   function handleReset() {
+    clearEvaluation();
     setStep('upload');
     setFiles([]);
     setHint('');
@@ -80,7 +111,6 @@ export default function HomePage() {
 
       {/* Main content */}
       <div className="mx-auto max-w-xl px-4 py-10">
-        {/* Title */}
         <div className="mb-8 text-center">
           <h2 className="font-display text-3xl font-bold leading-tight text-ink">
             Préparez une évaluation
@@ -90,17 +120,14 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="mb-6 rounded-xl border border-error/20 bg-error/5 px-4 py-3 text-sm text-error">
             {error}
           </div>
         )}
 
-        {/* Upload */}
         <UploadZone files={files} onFilesChange={setFiles} maxFiles={12} />
 
-        {/* Hint */}
         {files.length > 0 && (
           <div className="mt-6">
             <label className="mb-2 block text-sm font-medium text-ink-soft">
@@ -116,7 +143,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* CTA */}
         <div className="mt-8">
           <button
             onClick={handleGenerate}
