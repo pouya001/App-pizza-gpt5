@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback, DragEvent } from 'react';
-import { Camera, FileUp, X, FileText } from 'lucide-react';
+import { Camera, Image, FileText, X, FilePlus } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { UploadedFile } from '@/lib/types';
 
@@ -11,11 +11,12 @@ interface UploadZoneProps {
   maxFiles?: number;
 }
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+const ALL_TYPES = [...IMAGE_TYPES, 'application/pdf'];
 
 async function compressImage(file: File): Promise<{ data: string; previewUrl: string }> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new globalThis.Image();
     const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
@@ -65,8 +66,14 @@ async function readPdfAsBase64(file: File): Promise<string> {
 }
 
 export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZoneProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 3 inputs distincts :
+  // galleryInputRef → image/* seulement → ouvre la galerie photo sur mobile
+  // pdfInputRef     → application/pdf   → ouvre le gestionnaire de fichiers
+  // cameraInputRef  → image/* + capture → ouvre l'appareil photo directement
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
   const [isDragging, setIsDragging] = useState(false);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
@@ -74,7 +81,9 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
 
   const processFiles = useCallback(
     async (rawFiles: File[]) => {
-      const toProcess = rawFiles.slice(0, remaining);
+      const toProcess = rawFiles
+        .filter((f) => ALL_TYPES.includes(f.type))
+        .slice(0, remaining);
       if (toProcess.length === 0) return;
 
       const tempIds = toProcess.map(() => crypto.randomUUID());
@@ -82,27 +91,17 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
 
       const results = await Promise.allSettled(
         toProcess.map(async (file, i): Promise<UploadedFile> => {
-          const isPdf = file.type === 'application/pdf';
-          if (isPdf) {
+          if (file.type === 'application/pdf') {
             const data = await readPdfAsBase64(file);
             return { id: tempIds[i], name: file.name, mimeType: 'application/pdf', data, isImage: false };
           }
           const { data, previewUrl } = await compressImage(file);
-          return {
-            id: tempIds[i],
-            name: file.name,
-            mimeType: 'image/jpeg',
-            data,
-            previewUrl,
-            isImage: true,
-          };
+          return { id: tempIds[i], name: file.name, mimeType: 'image/jpeg', data, previewUrl, isImage: true };
         }),
       );
 
       const newFiles: UploadedFile[] = [];
-      results.forEach((r) => {
-        if (r.status === 'fulfilled') newFiles.push(r.value);
-      });
+      results.forEach((r) => { if (r.status === 'fulfilled') newFiles.push(r.value); });
 
       setProcessingIds((prev) => {
         const next = new Set(prev);
@@ -125,10 +124,7 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDragging(false);
-    const items = Array.from(e.dataTransfer.files).filter((f) =>
-      ACCEPTED_TYPES.includes(f.type),
-    );
-    processFiles(items);
+    processFiles(Array.from(e.dataTransfer.files));
   }
 
   function removeFile(id: string) {
@@ -137,70 +133,66 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
     onFilesChange(files.filter((x) => x.id !== id));
   }
 
-  const isProcessing = processingIds.size > 0;
-
   return (
     <div className="space-y-4">
-      {/* Hidden inputs */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept={ACCEPTED_TYPES.join(',')}
-        multiple
-        className="hidden"
-        onChange={handleInputChange}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleInputChange}
-      />
+      {/* Input galerie photos — image/* uniquement → galerie sur mobile */}
+      <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleInputChange} />
+      {/* Input PDF — ouvre le gestionnaire de fichiers */}
+      <input ref={pdfInputRef} type="file" accept="application/pdf" multiple className="hidden" onChange={handleInputChange} />
+      {/* Input caméra — ouvre directement l'appareil photo */}
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleInputChange} />
 
-      {/* Drop zone (shown when no files or always on desktop) */}
       {files.length === 0 ? (
+        /* ── Zone vide ── */
         <div
           onDrop={handleDrop}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           className={clsx(
-            'relative flex min-h-[220px] flex-col items-center justify-center gap-6 rounded-2xl border-2 border-dashed p-8 transition-all',
-            isDragging
-              ? 'border-brick bg-brick/5'
-              : 'border-line bg-paper-dark hover:border-ink-soft',
+            'flex min-h-[240px] flex-col items-center justify-center gap-6 rounded-2xl border-2 border-dashed p-8 transition-all',
+            isDragging ? 'border-brick bg-brick/5' : 'border-line bg-paper-dark',
           )}
         >
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-paper shadow-card">
-              <FileUp className="h-6 w-6 text-ink-soft" />
+              <Image className="h-6 w-6 text-ink-soft" />
             </div>
-            <p className="text-sm font-medium text-ink">Glissez vos documents ici</p>
-            <p className="text-xs text-ink-soft">JPG, PNG, PDF — max {maxFiles} fichiers</p>
+            <p className="text-sm font-medium text-ink">Photos du cours</p>
+            <p className="text-xs text-ink-soft">Jusqu'à {maxFiles} photos ou PDF</p>
           </div>
 
+          {/* Boutons principaux */}
           <div className="flex w-full flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ink bg-paper px-4 py-3 text-sm font-medium text-ink transition-all hover:bg-ink hover:text-paper"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ink bg-paper px-4 py-3.5 text-sm font-medium text-ink transition-all hover:bg-ink hover:text-paper active:scale-95"
             >
               <Camera className="h-4 w-4" />
               Photographier
             </button>
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3 text-sm font-medium text-paper transition-all hover:bg-brick"
+              onClick={() => galleryInputRef.current?.click()}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-ink px-4 py-3.5 text-sm font-medium text-paper transition-all hover:bg-brick active:scale-95"
             >
-              <FileUp className="h-4 w-4" />
-              Choisir des fichiers
+              <Image className="h-4 w-4" />
+              Galerie photos
             </button>
           </div>
+
+          {/* Lien discret pour PDF */}
+          <button
+            type="button"
+            onClick={() => pdfInputRef.current?.click()}
+            className="flex items-center gap-1.5 text-xs text-ink-soft underline underline-offset-2 hover:text-ink"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            Importer un PDF
+          </button>
         </div>
       ) : (
-        /* Grid preview */
+        /* ── Grille aperçu ── */
         <div>
           <div
             onDrop={handleDrop}
@@ -214,17 +206,11 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
             {files.map((f, idx) => (
               <div key={f.id} className="group relative aspect-square">
                 {f.isImage && f.previewUrl ? (
-                  <img
-                    src={f.previewUrl}
-                    alt={f.name}
-                    className="h-full w-full rounded-lg object-cover"
-                  />
+                  <img src={f.previewUrl} alt={f.name} className="h-full w-full rounded-lg object-cover" />
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-lg bg-paper p-2 shadow-sm">
                     <FileText className="h-6 w-6 text-ink-soft" />
-                    <span className="line-clamp-2 text-center text-[10px] text-ink-soft">
-                      {f.name}
-                    </span>
+                    <span className="line-clamp-2 text-center text-[10px] text-ink-soft">{f.name}</span>
                   </div>
                 )}
                 <span className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink/70 text-[10px] font-bold text-paper">
@@ -233,29 +219,30 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
                 <button
                   type="button"
                   onClick={() => removeFile(f.id)}
-                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 shadow transition-opacity group-hover:opacity-100"
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 shadow transition-opacity group-hover:opacity-100 active:opacity-100"
                 >
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
 
-            {/* Add more button */}
+            {/* Ajouter (ouvre la galerie) */}
             {remaining > 0 && (
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-line bg-paper text-xs text-ink-soft transition-colors hover:border-ink-soft"
+                onClick={() => galleryInputRef.current?.click()}
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-line bg-paper text-xs text-ink-soft transition-colors hover:border-ink-soft active:scale-95"
               >
-                <FileUp className="h-4 w-4" />
+                <FilePlus className="h-4 w-4" />
                 <span>Ajouter</span>
               </button>
             )}
           </div>
 
+          {/* Barre secondaire */}
           <div className="mt-3 flex items-center justify-between">
             <span className="text-xs text-ink-soft">
-              {files.length} document{files.length > 1 ? 's' : ''} • {remaining} restant{remaining > 1 ? 's' : ''}
+              {files.length} doc{files.length > 1 ? 's' : ''} · {remaining} restant{remaining > 1 ? 's' : ''}
             </span>
             <div className="flex gap-2">
               <button
@@ -269,20 +256,29 @@ export function UploadZone({ files, onFilesChange, maxFiles = 12 }: UploadZonePr
               </button>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => galleryInputRef.current?.click()}
                 disabled={remaining === 0}
                 className="flex items-center gap-1 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-ink hover:text-ink disabled:opacity-40"
               >
-                <FileUp className="h-3.5 w-3.5" />
-                Fichier
+                <Image className="h-3.5 w-3.5" />
+                Galerie
+              </button>
+              <button
+                type="button"
+                onClick={() => pdfInputRef.current?.click()}
+                disabled={remaining === 0}
+                className="flex items-center gap-1 rounded-lg border border-line bg-paper px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-ink hover:text-ink disabled:opacity-40"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                PDF
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {isProcessing && (
-        <p className="text-center text-xs text-ink-soft">Compression en cours…</p>
+      {processingIds.size > 0 && (
+        <p className="text-center text-xs text-ink-soft animate-pulse">Compression en cours…</p>
       )}
     </div>
   );
