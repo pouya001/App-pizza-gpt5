@@ -36,10 +36,14 @@ export default function HomePage() {
 
   // Restaure le dernier résultat si la page a été rechargée pendant/après la génération
   useEffect(() => {
-    const saved = loadEvaluation();
-    if (saved) {
-      setEvaluation(saved);
-      setStep('result');
+    try {
+      const saved = loadEvaluation();
+      if (saved && Array.isArray(saved.exercices) && saved.exercices.length > 0) {
+        setEvaluation(saved);
+        setStep('result');
+      }
+    } catch {
+      clearEvaluation();
     }
   }, []);
 
