@@ -1,0 +1,49 @@
+{
+  "note": "Prix indicatifs — devis gratuit en atelier",
+  "noteNl": "Richtprijzen — gratis offerte in het atelier",
+  "categories": [
+    {
+      "id": "pantalons",
+      "labelFr": "Pantalons",
+      "labelNl": "Broeken",
+      "items": [
+        { "id": "ourlet-simple", "labelFr": "Ourlet pantalon simple", "labelNl": "Zoom broek eenvoudig", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null },
+        { "id": "ourlet-doublure", "labelFr": "Ourlet pantalon avec doublure", "labelNl": "Zoom broek met voering", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null }
+      ]
+    },
+    {
+      "id": "robes-jupes",
+      "labelFr": "Robes & jupes",
+      "labelNl": "Jurken & rokken",
+      "items": [
+        { "id": "raccourcir-jupe", "labelFr": "Raccourcir jupe/robe", "labelNl": "Rok/jurk verkorten", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null }
+      ]
+    },
+    {
+      "id": "reparations",
+      "labelFr": "Réparations",
+      "labelNl": "Reparaties",
+      "items": [
+        { "id": "fermeture-eclair", "labelFr": "Changement de fermeture éclair (pantalon)", "labelNl": "Rits vervangen (broek)", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null }
+      ]
+    },
+    {
+      "id": "ajustements",
+      "labelFr": "Ajustements",
+      "labelNl": "Aanpassingen",
+      "items": [
+        { "id": "cintrer-chemise", "labelFr": "Cintrer une chemise", "labelNl": "Hemd tailleren", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null },
+        { "id": "manches-veste", "labelFr": "Raccourcir manches de veste", "labelNl": "Jaskouwen verkorten", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null }
+      ]
+    },
+    {
+      "id": "specialites",
+      "labelFr": "Spécialités",
+      "labelNl": "Specialiteiten",
+      "items": [
+        { "id": "cuir-daim", "labelFr": "Retouche cuir & daim (sur devis)", "labelNl": "Leer & suède retouche (op offerte)", "priceFr": "Devis gratuit", "priceNl": "Gratis offerte", "priceValue": null },
+        { "id": "rideaux", "labelFr": "Rideaux (au mètre)", "labelNl": "Gordijnen (per meter)", "priceFr": "À confirmer", "priceNl": "Te bevestigen", "priceValue": null }
+      ]
+    }
+  ]
+}

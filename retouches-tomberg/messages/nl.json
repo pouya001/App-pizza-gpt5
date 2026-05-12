@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "services": "Diensten",
+    "pricing": "Tarieven",
+    "hours": "Openingsuren",
+    "contact": "Contact",
+    "call": "Bellen"
+  },
+  "hero": {
+    "h1": "Retouches Tomberg",
+    "subtitle": "Atelierkleermaker in Woluwe-Sint-Lambrecht",
+    "description": "Retouches, herstellingen en transformaties op alle kledingstukken. Specialist in leer & suède sinds 1995.",
+    "ctaCall": "Bellen: 02 772 63 40",
+    "ctaMap": "Routebeschrijving",
+    "badge1": "Metro Tomberg op 2 min",
+    "badge2": "Heren • Dames • Kinderen",
+    "badge3": "Specialist leer & suède"
+  },
+  "services": {
+    "title": "Onze diensten",
+    "subtitle": "Vakmanschap in uw dienst"
+  },
+  "pricing": {
+    "title": "Richtprijzen",
+    "subtitle": "Richtprijzen — gratis offerte in het atelier",
+    "from": "Vanaf"
+  },
+  "hours": {
+    "title": "Openingsuren & bereikbaarheid",
+    "subtitle": "Bezoek ons vlakbij de metro Tomberg",
+    "openNow": "Nu open",
+    "closedNow": "Gesloten",
+    "opensAt": "Opent",
+    "closesAt": "Sluit om",
+    "tomorrow": "morgen",
+    "closed": "Gesloten",
+    "access": {
+      "address": "Tomberg 93, 1200 Woluwe-Sint-Lambrecht",
+      "metro": "Metro lijn 1 — halte Tomberg (2 min te voet)",
+      "bus": "Bus MIVB 28",
+      "parking": "Straatparkeren in de buurt"
+    },
+    "mapButton": "Bekijk op kaart"
+  },
+  "whyUs": {
+    "title": "Waarom ons kiezen?",
+    "subtitle": "Een vertrouwd atelier in uw buurt",
+    "items": [
+      {
+        "icon": "Scissors",
+        "title": "Ervaren vakman",
+        "desc": "Jaren vakmanschap voor kwaliteitsretouches, ongeacht de complexiteit."
+      },
+      {
+        "icon": "Award",
+        "title": "Specialist leer & suède",
+        "desc": "Zeldzame en gezochte expertise voor uw meest waardevolle leer- en suèdeartikelen."
+      },
+      {
+        "icon": "Zap",
+        "title": "Snelle levertijden",
+        "desc": "De meeste eenvoudige retouches zijn binnen 48u klaar. Spoedgevallen mogelijk op aanvraag."
+      },
+      {
+        "icon": "Heart",
+        "title": "Persoonlijk advies",
+        "desc": "Een buurtwinkel die luistert en de tijd neemt om uw behoeften te begrijpen."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Wat onze klanten zeggen",
+    "subtitle": "Honderden tevreden klanten in Woluwe-Sint-Lambrecht",
+    "leaveReview": "Laat een recensie achter op Google",
+    "items": [
+      {
+        "name": "Marie L.",
+        "rating": 5,
+        "text": "Uitstekend werk aan mijn leren jas! De reparatie is onzichtbaar, de scheur is helemaal verdwenen. Sterk aanbevolen.",
+        "date": "November 2024"
+      },
+      {
+        "name": "Thomas B.",
+        "rating": 5,
+        "text": "Broekzomen snel en netjes gedaan. Redelijke prijzen en vriendelijke ontvangst. Mijn vaste buurtwinkel voortaan!",
+        "date": "Oktober 2024"
+      },
+      {
+        "name": "Sophie V.",
+        "rating": 5,
+        "text": "Mijn gordijnen laten inkorten, perfect resultaat. Snelle en professionele service. Ik kom zeker terug.",
+        "date": "September 2024"
+      }
+    ]
+  },
+  "contact": {
+    "title": "Contact & bereikbaarheid",
+    "subtitle": "Bezoek ons of bel ons rechtstreeks",
+    "phone1Label": "Atelier",
+    "phone2Label": "Mobiel",
+    "addressLabel": "Adres",
+    "whatsapp": "WhatsApp",
+    "getDirections": "Google Maps routebeschrijving"
+  },
+  "footer": {
+    "tagline": "Kleermakerij & retouches in Woluwe-Sint-Lambrecht",
+    "legalLinks": {
+      "mentions": "Wettelijke vermeldingen",
+      "privacy": "Privacybeleid"
+    },
+    "rights": "Alle rechten voorbehouden."
+  },
+  "legal": {
+    "mentions": {
+      "title": "Wettelijke vermeldingen",
+      "sections": {
+        "editor": "Website-uitgever",
+        "hosting": "Hosting",
+        "contact": "Contact"
+      }
+    },
+    "privacy": {
+      "title": "Privacybeleid",
+      "intro": "Retouches Tomberg verbindt zich ertoe uw privacy te beschermen."
+    }
+  },
+  "map": {
+    "loadButton": "Google Maps kaart weergeven",
+    "consent": "Door de kaart te laden, stemt u ermee in dat Google Maps bepaalde gegevens verwerkt. Er worden geen advertentiecookies gebruikt."
+  }
+}

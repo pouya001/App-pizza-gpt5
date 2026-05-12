@@ -1,0 +1,131 @@
+{
+  "nav": {
+    "services": "Services",
+    "pricing": "Tarifs",
+    "hours": "Horaires",
+    "contact": "Contact",
+    "call": "Appeler"
+  },
+  "hero": {
+    "h1": "Retouches Tomberg",
+    "subtitle": "Atelier de couture à Woluwe-Saint-Lambert",
+    "description": "Retouches, réparations et transformations sur tous vêtements. Spécialiste cuir & daim depuis 1995.",
+    "ctaCall": "Appeler le 02 772 63 40",
+    "ctaMap": "Itinéraire",
+    "badge1": "Métro Tomberg à 2 min",
+    "badge2": "Hommes • Femmes • Enfants",
+    "badge3": "Spécialiste cuir & daim"
+  },
+  "services": {
+    "title": "Nos services",
+    "subtitle": "Un savoir-faire artisanal à votre service"
+  },
+  "pricing": {
+    "title": "Tarifs indicatifs",
+    "subtitle": "Prix indicatifs — devis gratuit en atelier",
+    "from": "À partir de"
+  },
+  "hours": {
+    "title": "Horaires & accès",
+    "subtitle": "Retrouvez-nous à deux pas du métro Tomberg",
+    "openNow": "Ouvert maintenant",
+    "closedNow": "Fermé",
+    "opensAt": "Ouvre",
+    "closesAt": "Ferme à",
+    "tomorrow": "demain",
+    "closed": "Fermé",
+    "access": {
+      "address": "Tomberg 93, 1200 Woluwe-Saint-Lambert",
+      "metro": "Métro ligne 1 — arrêt Tomberg (2 min à pied)",
+      "bus": "Bus STIB 28",
+      "parking": "Parking en rue à proximité"
+    },
+    "mapButton": "Voir sur la carte"
+  },
+  "whyUs": {
+    "title": "Pourquoi nous choisir ?",
+    "subtitle": "Un atelier de confiance au cœur de votre quartier",
+    "items": [
+      {
+        "icon": "Scissors",
+        "title": "Artisan expérimenté",
+        "desc": "Des années de savoir-faire pour des retouches de qualité, quelle que soit la complexité."
+      },
+      {
+        "icon": "Award",
+        "title": "Spécialiste cuir & daim",
+        "desc": "Une expertise rare et recherchée pour vos articles en cuir et daim les plus précieux."
+      },
+      {
+        "icon": "Zap",
+        "title": "Délais rapides",
+        "desc": "La plupart des retouches simples sont prêtes en 48h. Urgences possibles sur demande."
+      },
+      {
+        "icon": "Heart",
+        "title": "Conseil personnalisé",
+        "desc": "Un atelier de quartier à l'écoute, qui prend le temps de comprendre vos besoins."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Ce que disent nos clients",
+    "subtitle": "Des centaines de clients satisfaits à Woluwe-Saint-Lambert",
+    "leaveReview": "Laisser un avis sur Google",
+    "items": [
+      {
+        "name": "Marie L.",
+        "rating": 5,
+        "text": "Excellent travail sur mon manteau en cuir ! La réparation est invisible, on ne voit plus du tout l'accroc. Je recommande vivement.",
+        "date": "Novembre 2024"
+      },
+      {
+        "name": "Thomas B.",
+        "rating": 5,
+        "text": "Ourlets de pantalons faits rapidement et proprement. Prix raisonnables et accueil sympathique. Mon atelier de quartier désormais !",
+        "date": "Octobre 2024"
+      },
+      {
+        "name": "Sophie V.",
+        "rating": 5,
+        "text": "J'ai fait raccourcir mes rideaux, résultat impeccable. Service rapide et professionnel. Je reviendrai sans hésiter.",
+        "date": "Septembre 2024"
+      }
+    ]
+  },
+  "contact": {
+    "title": "Contact & accès",
+    "subtitle": "Venez nous rendre visite ou appelez-nous directement",
+    "phone1Label": "Atelier",
+    "phone2Label": "Mobile",
+    "addressLabel": "Adresse",
+    "whatsapp": "WhatsApp",
+    "getDirections": "Itinéraire Google Maps"
+  },
+  "footer": {
+    "tagline": "Atelier de couture & retouches à Woluwe-Saint-Lambert",
+    "legalLinks": {
+      "mentions": "Mentions légales",
+      "privacy": "Politique de confidentialité"
+    },
+    "rights": "Tous droits réservés."
+  },
+  "legal": {
+    "mentions": {
+      "title": "Mentions légales",
+      "sections": {
+        "editor": "Éditeur du site",
+        "hosting": "Hébergement",
+        "contact": "Contact"
+      }
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "intro": "Retouches Tomberg s'engage à protéger votre vie privée."
+    }
+  },
+  "map": {
+    "loadButton": "Afficher la carte Google Maps",
+    "consent": "En chargeant la carte, vous acceptez que Google Maps traite certaines données. Aucun cookie publicitaire n'est utilisé."
+  }
+}

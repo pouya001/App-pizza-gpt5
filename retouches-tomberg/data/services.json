@@ -1,0 +1,57 @@
+[
+  {
+    "id": "ourlets",
+    "icon": "Scissors",
+    "titleFr": "Ourlets & raccourcis",
+    "titleNl": "Zomen & verkorten",
+    "descFr": "Pantalons, jupes, robes, manches — ourlets précis et soignés.",
+    "descNl": "Broeken, rokken, jurken, mouwen — nauwkeurige en verzorgde zomen.",
+    "startingPrice": null
+  },
+  {
+    "id": "ajustements",
+    "icon": "Ruler",
+    "titleFr": "Ajustements",
+    "titleNl": "Aanpassingen",
+    "descFr": "Élargir, rétrécir, cintrer, rallonger — pour un vêtement à votre mesure.",
+    "descNl": "Verwijden, vernauwen, tailleren, verlengings — voor kleding op maat.",
+    "startingPrice": null
+  },
+  {
+    "id": "reparations",
+    "icon": "Wrench",
+    "titleFr": "Réparations",
+    "titleNl": "Reparaties",
+    "descFr": "Fermetures éclair, coutures lâches, trous, accrocs — réparé comme neuf.",
+    "descNl": "Ritsen, losse naden, gaten, scheuren — hersteld als nieuw.",
+    "startingPrice": null
+  },
+  {
+    "id": "cuir",
+    "icon": "Star",
+    "titleFr": "Cuir & daim",
+    "titleNl": "Leer & suède",
+    "descFr": "Spécialité maison : réparation et transformation d'articles en cuir et daim.",
+    "descNl": "Onze specialiteit: reparatie en transformatie van leer- en suèdeartikelen.",
+    "startingPrice": null,
+    "featured": true
+  },
+  {
+    "id": "rideaux",
+    "icon": "Home",
+    "titleFr": "Rideaux & textiles d'intérieur",
+    "titleNl": "Gordijnen & binnentextiel",
+    "descFr": "Raccourcir, ourler, poser une doublure — pour des rideaux parfaitement ajustés.",
+    "descNl": "Verkorten, zomen, voering aanbrengen — voor perfect afgestelde gordijnen.",
+    "startingPrice": null
+  },
+  {
+    "id": "transformations",
+    "icon": "Sparkles",
+    "titleFr": "Transformations",
+    "titleNl": "Transformaties",
+    "descFr": "Modification de coupe, modernisation de vêtements — donnez une seconde vie à vos pièces.",
+    "descNl": "Snijwijziging, modernisering van kleding — geef uw kledingstukken een tweede leven.",
+    "startingPrice": null
+  }
+]

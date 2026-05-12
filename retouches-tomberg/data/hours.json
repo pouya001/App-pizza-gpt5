@@ -1,0 +1,13 @@
+{
+  "schedule": [
+    { "day": "monday", "dayFr": "Lundi", "dayNl": "Maandag", "open": "09:00", "close": "18:30", "closed": false },
+    { "day": "tuesday", "dayFr": "Mardi", "dayNl": "Dinsdag", "open": "09:00", "close": "18:30", "closed": false },
+    { "day": "wednesday", "dayFr": "Mercredi", "dayNl": "Woensdag", "open": "09:00", "close": "18:30", "closed": false },
+    { "day": "thursday", "dayFr": "Jeudi", "dayNl": "Donderdag", "open": "09:00", "close": "18:30", "closed": false },
+    { "day": "friday", "dayFr": "Vendredi", "dayNl": "Vrijdag", "open": "09:00", "close": "18:30", "closed": false },
+    { "day": "saturday", "dayFr": "Samedi", "dayNl": "Zaterdag", "open": "10:00", "close": "17:00", "closed": false },
+    { "day": "sunday", "dayFr": "Dimanche", "dayNl": "Zondag", "open": null, "close": null, "closed": true }
+  ],
+  "timezone": "Europe/Brussels",
+  "note": "Horaires à confirmer avec le gérant. Source : Guide Vlan."
+}

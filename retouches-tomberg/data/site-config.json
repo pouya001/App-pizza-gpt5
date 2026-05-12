@@ -1,0 +1,31 @@
+{
+  "name": "Retouches Tomberg",
+  "tagline": "Atelier de couture à Woluwe-Saint-Lambert",
+  "description": "Retouches, réparations et transformations sur tous vêtements. Spécialiste cuir & daim.",
+  "address": {
+    "street": "Tomberg 93",
+    "city": "Woluwe-Saint-Lambert",
+    "postalCode": "1200",
+    "country": "BE",
+    "countryName": "Belgique"
+  },
+  "phones": [
+    { "label": "Atelier", "number": "+3227726340", "display": "02 772 63 40" },
+    { "label": "Mobile", "number": "+32476201474", "display": "0476 20 14 74" }
+  ],
+  "geo": {
+    "latitude": "50.8530",
+    "longitude": "4.4381"
+  },
+  "googleMapsUrl": "https://maps.google.com/?q=Tomberg+93+1200+Woluwe-Saint-Lambert",
+  "googleMapsEmbed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2519.7!2d4.4381!3d50.8530!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zUmV0b3VjaGVzIFRvbWJlcmc!5e0!3m2!1sfr!2sbe!4v1",
+  "whatsappUrl": "https://wa.me/32476201474?text=Bonjour%2C%20je%20souhaiterais%20un%20devis",
+  "metro": "Ligne 1 — arrêt Tomberg",
+  "bus": "STIB 28",
+  "priceRange": "€€",
+  "areaServed": ["Woluwe-Saint-Lambert", "Bruxelles", "Bruxelles-Capitale"],
+  "foundingYear": "1995",
+  "siteUrl": "https://retouches-tomberg.be",
+  "defaultLocale": "fr",
+  "locales": ["fr", "nl"]
+}
