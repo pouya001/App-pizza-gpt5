@@ -14,8 +14,33 @@ RÈGLES IMPORTANTES :
 - Chaque item d'un exercice doit être sur sa propre ligne (dans le champ "enonce" utilise \\n entre chaque item).
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans balises de code, sans texte avant ou après.
 
-TYPES D'EXERCICES : "qcm", "texte_a_trous", "question_ouverte", "calcul", "vrai_faux", "association", "legende", "conjugaison"
-Choisis le type qui correspond le mieux au format réel du cours.
+TYPES D'EXERCICES — choisis celui qui correspond le mieux au format réel du cours :
+
+• "qcm" — Question à choix multiples.
+  - Si CHAQUE item de la liste a ses propres cases à cocher (ex : "• des joueurs → ☐ défini ☐ indéfini ☐ partitif"), alors :
+    → mets les items dans "enonce" séparés par \\n (un item par ligne, ex: "• des joueurs\\n• du beurre\\n• la maison")
+    → "options" = les choix possibles (ex: ["article défini", "article indéfini", "article partitif"])
+    → "reponse_correcte" = tableau avec une réponse par item dans l'ordre (ex: ["article indéfini", "article partitif", "article défini"])
+  - Sinon (une seule question avec plusieurs choix) : "enonce" = la question, "options" = les choix, "reponse_correcte" = la bonne réponse.
+
+• "texte_a_trous" — Texte avec des ___ à compléter. "blancs" = les mots attendus.
+
+• "question_ouverte" — Réponse rédigée, ou phrases à souligner/entourer/identifier.
+
+• "calcul" — Opérations arithmétiques.
+
+• "vrai_faux" — Affirmations à évaluer vrai ou faux. "explication_corrige" = la justification.
+
+• "association" — Relier des éléments. "options" = les items à relier.
+
+• "legende" — Légender un schéma. "reponse_correcte" = tableau des étiquettes.
+
+• "conjugaison" — UNIQUEMENT pour conjuguer un verbe dans un tableau (ex : conjuguer "être" au présent). Ne JAMAIS utiliser pour des exercices grammaticaux non-verbaux.
+
+• "tableau" — Tableau d'analyse ou de classification (genre/nombre/nature, classer des mots, compléter une grille d'analyse, etc.).
+  → "colonnes" = en-têtes des colonnes (ex: ["Déterminant", "Nature", "Genre", "Nombre"])
+  → "options" = items pré-remplis dans la 1ère colonne (ex: ["Les", "du", "au"])
+  → "explication_corrige" = le tableau complété décrit en texte court
 
 FORMAT DE RÉPONSE — JSON STRICTEMENT VALIDE :
 {
@@ -28,11 +53,12 @@ FORMAT DE RÉPONSE — JSON STRICTEMENT VALIDE :
     {
       "numero": number,
       "type": "string (un des types ci-dessus)",
-      "consigne": "string (instruction précise comme dans le cours, ex: 'Coche la bonne case.')",
-      "enonce": "string (items séparés par \\n si plusieurs lignes)",
+      "consigne": "string (instruction précise, ex: 'Coche la bonne case.' ou 'Souligne les déterminants.')",
+      "enonce": "string (pour qcm multi-items : items séparés par \\n ; pour tableau : phrase ou contexte à analyser)",
       "points": number,
-      "options": ["string"] (pour qcm uniquement, sinon omis),
-      "blancs": ["string"] (pour texte_a_trous uniquement, sinon omis),
+      "options": ["string"] (pour qcm : choix possibles ; pour tableau : items 1ère colonne ; sinon omis),
+      "colonnes": ["string"] (pour tableau uniquement),
+      "blancs": ["string"] (pour texte_a_trous uniquement),
       "reponse_correcte": "string ou string[]",
       "explication_corrige": "string (réponse courte pour correction rapide)"
     }

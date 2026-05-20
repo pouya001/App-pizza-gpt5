@@ -6,7 +6,8 @@ export type ExerciceType =
   | 'vrai_faux'
   | 'association'
   | 'legende'
-  | 'conjugaison';
+  | 'conjugaison'
+  | 'tableau';
 
 export interface Exercice {
   numero: number;
@@ -14,7 +15,8 @@ export interface Exercice {
   consigne: string;
   enonce: string;
   points?: number;
-  options?: string[];       // pour qcm : liste des choix
+  options?: string[];       // pour qcm : liste des choix ; pour tableau : items de la 1ère colonne
+  colonnes?: string[];      // pour tableau : en-têtes des colonnes
   blancs?: string[];        // pour texte_a_trous : mots attendus dans les blancs
   reponse_correcte: string | string[];
   explication_corrige?: string;

@@ -15,6 +15,7 @@ const TYPE_LABELS: Record<string, string> = {
   association: 'Association',
   legende: 'Légende',
   conjugaison: 'Conjugaison',
+  tableau: 'Tableau',
 };
 
 function toStringArray(v: string | string[] | undefined | null): string[] {
@@ -25,6 +26,18 @@ function toStringArray(v: string | string[] | undefined | null): string[] {
 function toString(v: string | string[] | undefined | null): string {
   if (!v) return '';
   return Array.isArray(v) ? v[0] ?? '' : v;
+}
+
+function CheckBox({ checked }: { checked: boolean }) {
+  return (
+    <div className={`h-4 w-4 shrink-0 rounded border-2 ${checked ? 'border-sage bg-sage' : 'border-ink/40'}`}>
+      {checked && (
+        <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+          <path d="M3 8l4 4 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
+  );
 }
 
 function BlankLines({ count = 3 }: { count?: number }) {
@@ -39,21 +52,48 @@ function BlankLines({ count = 3 }: { count?: number }) {
 
 function QCMResponse({ exercice, showAnswer }: Props) {
   const options = exercice.options ?? [];
+  const enonce = exercice.enonce ?? '';
+  const items = enonce.split('\n').map(s => s.trim()).filter(Boolean);
+
+  // Multi-item mode: enonce has multiple lines, each item gets its own row of checkboxes
+  if (items.length > 1 && options.length > 0) {
+    const correctAnswers = toStringArray(exercice.reponse_correcte);
+    return (
+      <div className="mt-3 divide-y divide-line">
+        {items.map((item, i) => {
+          const itemCorrect = correctAnswers[i] ?? '';
+          return (
+            <div key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
+              <span className="min-w-[110px] text-sm font-semibold text-ink">{item}</span>
+              <span className="text-xs text-ink-soft">→</span>
+              <div className="flex flex-wrap gap-x-5 gap-y-1">
+                {options.map((opt) => {
+                  const isSelected = showAnswer && opt === itemCorrect;
+                  return (
+                    <div key={opt} className="flex items-center gap-1.5">
+                      <CheckBox checked={isSelected} />
+                      <span className={`text-sm ${isSelected ? 'font-bold text-ink' : 'text-ink'}`}>{opt}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Single-item mode
   const correct = toString(exercice.reponse_correcte);
   if (options.length === 0) return <BlankLines count={2} />;
   return (
     <div className="mt-3 space-y-2">
-      {options.map((opt, i) => {
+      {options.map((opt) => {
         const isCorrect = showAnswer && opt === correct;
         return (
-          <div key={i} className="flex items-center gap-3">
-            <div className={`h-4 w-4 shrink-0 rounded border-2 ${isCorrect ? 'border-sage bg-sage' : 'border-ink/40'}`}>
-              {isCorrect && (
-                <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-                  <path d="M3 8l4 4 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </div>
+          <div key={opt} className="flex items-center gap-3">
+            <CheckBox checked={isCorrect} />
             <span className={`text-sm ${isCorrect ? 'font-bold text-ink' : 'text-ink'}`}>{opt}</span>
           </div>
         );
@@ -69,12 +109,11 @@ function TrouResponse({ exercice, showAnswer }: Props) {
     : toStringArray(exercice.reponse_correcte);
 
   if (!enonce.includes('___')) {
-    // Pas de marqueurs → affiche le texte normalement + espace de réponse
     return (
       <div className="mt-3">
         <p className="text-sm text-ink-soft">{enonce}</p>
         {showAnswer
-          ? <p className="mt-2 rounded-lg border border-sage/30 bg-sage/5 p-2 text-sm font-medium text-sage">{blancs.join(' / ')}</p>
+          ? <p className="mt-2 rounded-lg border border-sage/30 bg-sage/5 p-2 text-sm font-medium text-sage print:bg-white">{blancs.join(' / ')}</p>
           : <BlankLines count={2} />
         }
       </div>
@@ -102,7 +141,7 @@ function OpenResponse({ exercice, showAnswer }: Props) {
   if (showAnswer) {
     const answer = toStringArray(exercice.reponse_correcte).join(' / ') || '—';
     return (
-      <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3">
+      <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3 print:bg-white">
         <span className="text-xs font-semibold uppercase tracking-wide text-sage">Réponse :</span>
         <p className="mt-1 text-sm text-ink">{answer}</p>
       </div>
@@ -123,13 +162,7 @@ function VraiFauxResponse({ exercice, showAnswer }: Props) {
           const isSelected = showAnswer && ((v === 'Vrai' && isVrai) || (v === 'Faux' && isFaux));
           return (
             <div key={v} className="flex items-center gap-2">
-              <div className={`h-4 w-4 rounded border-2 ${isSelected ? 'border-sage bg-sage' : 'border-ink/40'}`}>
-                {isSelected && (
-                  <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-                    <path d="M3 8l4 4 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </div>
+              <CheckBox checked={isSelected} />
               <span className={`text-sm ${isSelected ? 'font-bold' : ''}`}>{v}</span>
             </div>
           );
@@ -172,7 +205,7 @@ function AssociationResponse({ exercice, showAnswer }: Props) {
   if (showAnswer) {
     const answer = toStringArray(exercice.reponse_correcte).join(' • ') || (exercice.enonce ?? '');
     return (
-      <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3">
+      <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3 print:bg-white">
         <span className="text-xs font-semibold uppercase tracking-wide text-sage">Corrigé :</span>
         <p className="mt-1 text-sm text-ink">{answer}</p>
       </div>
@@ -217,21 +250,68 @@ function CalcResponse({ exercice, showAnswer }: Props) {
   if (showAnswer) {
     const answer = toStringArray(exercice.reponse_correcte).join(', ') || '—';
     return (
-      <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3">
+      <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3 print:bg-white">
         <span className="text-xs font-semibold uppercase tracking-wide text-sage">= {answer}</span>
       </div>
     );
   }
-  return <div className="mt-3 h-16 rounded-lg border border-dashed border-ink/30 bg-paper-dark" />;
+  return <div className="mt-3 h-16 rounded-lg border border-dashed border-ink/30" />;
+}
+
+function TableauResponse({ exercice, showAnswer }: Props) {
+  const colonnes = exercice.colonnes ?? [];
+  const rowItems = exercice.options ?? [];
+  const rowCount = rowItems.length || 4;
+
+  if (colonnes.length === 0) return <BlankLines count={4} />;
+
+  return (
+    <div className="mt-3 overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            {colonnes.map((col, i) => (
+              <th key={i} className="border border-ink/30 bg-paper-dark px-3 py-2 text-left text-xs font-semibold text-ink print:bg-transparent">
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rowCount }).map((_, i) => (
+            <tr key={i}>
+              {colonnes.map((_, j) => (
+                <td key={j} className="border border-ink/30 px-3 py-3 text-sm">
+                  {j === 0 && rowItems[i]
+                    ? <span className="font-medium text-ink">{rowItems[i]}</span>
+                    : <span>&nbsp;</span>
+                  }
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {showAnswer && exercice.explication_corrige && (
+        <div className="mt-2 rounded-md border border-sage/30 bg-sage/5 px-3 py-2 text-xs text-ink print:bg-white">
+          <span className="font-semibold text-sage">Corrigé : </span>
+          {exercice.explication_corrige}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ExerciceContent({ exercice, showAnswer }: Props) {
   const typeLabel = TYPE_LABELS[exercice.type] ?? exercice.type;
   const enonce = exercice.enonce ?? '';
   const consigne = exercice.consigne ?? '';
+  const eenoceLines = enonce.split('\n').map(s => s.trim()).filter(Boolean);
+  // Multi-item QCM: items are in enonce (one per line), rendered inside QCMResponse — skip separate enonce display
+  const isMultiItemQcm = exercice.type === 'qcm' && eenoceLines.length > 1;
 
   return (
-    <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-paper p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0">
+    <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-paper p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0 print:bg-white">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-base font-bold text-ink">Exercice {exercice.numero}</span>
         <span className="text-xs italic text-ink-soft">{typeLabel}</span>
@@ -244,8 +324,10 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
 
       <p className="font-semibold text-sm text-ink">{consigne}</p>
 
-      {exercice.type !== 'texte_a_trous' && enonce && enonce !== consigne && (
-        <p className="mt-1.5 text-sm text-ink-soft">{enonce}</p>
+      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && eenoceLines.length > 0 && enonce !== consigne && (
+        <div className="mt-1.5 space-y-0.5 text-sm text-ink-soft">
+          {eenoceLines.map((line, i) => <p key={i}>{line}</p>)}
+        </div>
       )}
 
       {exercice.type === 'qcm' && <QCMResponse exercice={exercice} showAnswer={showAnswer} />}
@@ -256,18 +338,18 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
       {exercice.type === 'association' && <AssociationResponse exercice={exercice} showAnswer={showAnswer} />}
       {exercice.type === 'legende' && <LegendeResponse exercice={exercice} showAnswer={showAnswer} />}
       {exercice.type === 'calcul' && <CalcResponse exercice={exercice} showAnswer={showAnswer} />}
+      {exercice.type === 'tableau' && <TableauResponse exercice={exercice} showAnswer={showAnswer} />}
 
-      {showAnswer && exercice.explication_corrige && exercice.type !== 'vrai_faux' && (
-        <p className="mt-3 rounded-md bg-paper-dark px-3 py-1.5 text-xs text-ink-soft">
-          💡 {exercice.explication_corrige}
+      {showAnswer && exercice.explication_corrige && exercice.type !== 'vrai_faux' && exercice.type !== 'tableau' && (
+        <p className="mt-3 rounded-md bg-paper-dark px-3 py-1.5 text-xs text-ink-soft print:bg-transparent">
+          {exercice.explication_corrige}
         </p>
       )}
     </div>
   );
 }
 
-// Chaque exercice est isolé dans son propre ErrorBoundary
-// → si un exercice plante, les autres restent affichés
+// Each exercise is isolated in its own ErrorBoundary so a crash doesn't break the others
 export function ExerciceRenderer(props: Props) {
   return (
     <ErrorBoundary>
