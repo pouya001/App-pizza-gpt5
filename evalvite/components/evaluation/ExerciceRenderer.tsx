@@ -202,8 +202,44 @@ function ConjugaisonResponse({ exercice, showAnswer }: Props) {
 }
 
 function AssociationResponse({ exercice, showAnswer }: Props) {
+  const leftItems = (exercice.enonce ?? '').split('\n').map(s => s.trim()).filter(Boolean);
+  const rightItems = exercice.options ?? [];
+  const correctAnswers = toStringArray(exercice.reponse_correcte);
+
+  // Two-column mode: left items in enonce (one per line), right items in options
+  if (leftItems.length > 1 && rightItems.length > 0) {
+    return (
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 print:grid-cols-2">
+        {/* Left column */}
+        <div className="divide-y divide-line">
+          {leftItems.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 py-2">
+              <span className="w-5 shrink-0 text-sm font-semibold text-ink">{i + 1}.</span>
+              <span className="flex-1 text-sm text-ink">{item}</span>
+              {showAnswer
+                ? <span className="ml-1 text-sm font-bold text-sage">→ {correctAnswers[i] ?? '—'}</span>
+                : <div className="w-10 shrink-0 border-b border-dashed border-ink/40" />
+              }
+            </div>
+          ))}
+        </div>
+
+        {/* Right column */}
+        <div className="divide-y divide-line border-l border-line pl-4">
+          {rightItems.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 py-2">
+              <span className="w-6 shrink-0 text-sm font-semibold text-ink-soft">{String.fromCharCode(65 + i)}.</span>
+              <span className="text-sm text-ink">{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback — corrigé without structure
   if (showAnswer) {
-    const answer = toStringArray(exercice.reponse_correcte).join(' • ') || (exercice.enonce ?? '');
+    const answer = correctAnswers.join(' • ') || (exercice.enonce ?? '');
     return (
       <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3 print:bg-white">
         <span className="text-xs font-semibold uppercase tracking-wide text-sage">Corrigé :</span>
@@ -211,11 +247,12 @@ function AssociationResponse({ exercice, showAnswer }: Props) {
       </div>
     );
   }
-  const options = exercice.options ?? [];
-  if (options.length === 0) return <BlankLines count={4} />;
+
+  // Fallback — simple list with blank lines
+  if (rightItems.length === 0) return <BlankLines count={4} />;
   return (
     <div className="mt-3 space-y-2">
-      {options.map((opt, i) => (
+      {rightItems.map((opt, i) => (
         <div key={i} className="flex items-center gap-3">
           <span className="shrink-0 text-sm font-medium text-ink-soft">{i + 1}.</span>
           <span className="text-sm text-ink">{opt}</span>
@@ -307,8 +344,9 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
   const enonce = exercice.enonce ?? '';
   const consigne = exercice.consigne ?? '';
   const eenoceLines = enonce.split('\n').map(s => s.trim()).filter(Boolean);
-  // Multi-item QCM: items are in enonce (one per line), rendered inside QCMResponse — skip separate enonce display
+  // Items rendered inside the response component — skip the separate enonce paragraph
   const isMultiItemQcm = exercice.type === 'qcm' && eenoceLines.length > 1;
+  const isMultiItemAssoc = exercice.type === 'association' && eenoceLines.length > 1 && (exercice.options?.length ?? 0) > 0;
 
   return (
     <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-paper p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0 print:bg-white">
@@ -324,7 +362,7 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
 
       <p className="font-semibold text-sm text-ink">{consigne}</p>
 
-      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && eenoceLines.length > 0 && enonce !== consigne && (
+      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && !isMultiItemAssoc && eenoceLines.length > 0 && enonce !== consigne && (
         <div className="mt-1.5 space-y-0.5 text-sm text-ink-soft">
           {eenoceLines.map((line, i) => <p key={i}>{line}</p>)}
         </div>

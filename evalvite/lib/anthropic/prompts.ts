@@ -31,7 +31,11 @@ TYPES D'EXERCICES — choisis celui qui correspond le mieux au format réel du c
 
 • "vrai_faux" — Affirmations à évaluer vrai ou faux. "explication_corrige" = la justification.
 
-• "association" — Relier des éléments. "options" = les items à relier.
+• "association" — Relier deux groupes d'éléments par paires (colonne gauche ↔ colonne droite).
+  → "enonce" = items de la COLONNE GAUCHE, un par ligne avec \\n (ex: "chien\\nchat\\noiseau")
+  → "options" = items de la COLONNE DROITE (les éléments à associer, ex: ["aboie", "miaule", "chante"])
+  → "reponse_correcte" = tableau avec la bonne réponse droite pour chaque item gauche, dans l'ordre
+  → IMPORTANT : s'assurer que le nombre d'items gauche = nombre d'items droite (correspondance 1 pour 1)
 
 • "legende" — Légender un schéma. "reponse_correcte" = tableau des étiquettes.
 
