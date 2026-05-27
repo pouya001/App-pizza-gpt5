@@ -151,6 +151,41 @@ function OpenResponse({ exercice, showAnswer }: Props) {
 }
 
 function VraiFauxResponse({ exercice, showAnswer }: Props) {
+  const enonce = exercice.enonce ?? '';
+  const statements = enonce.split('\n').map(s => s.trim()).filter(Boolean);
+  const correctAnswers = toStringArray(exercice.reponse_correcte);
+
+  // Multi-statement mode: each statement gets its own V/F checkboxes
+  if (statements.length > 1) {
+    return (
+      <div className="mt-3 divide-y divide-line">
+        {statements.map((stmt, i) => {
+          const ans = (correctAnswers[i] ?? '').toLowerCase();
+          const isVrai = ans.includes('vrai') || ans === 'true' || ans === 'v';
+          const isFaux = ans.includes('faux') || ans === 'false' || ans === 'f';
+          return (
+            <div key={i} className="flex items-center gap-3 py-2.5">
+              <span className="w-5 shrink-0 text-sm font-medium text-ink-soft">{i + 1}.</span>
+              <span className="flex-1 text-sm text-ink">{stmt}</span>
+              <div className="flex shrink-0 gap-4">
+                {(['Vrai', 'Faux'] as const).map((v) => {
+                  const isSelected = showAnswer && ((v === 'Vrai' && isVrai) || (v === 'Faux' && isFaux));
+                  return (
+                    <div key={v} className="flex items-center gap-1.5">
+                      <CheckBox checked={isSelected} />
+                      <span className={`text-sm ${isSelected ? 'font-bold' : ''}`}>{v}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Single-statement mode
   const correct = toString(exercice.reponse_correcte).toLowerCase();
   const isVrai = correct.includes('vrai') || correct === 'true' || correct === 'v';
   const isFaux = correct.includes('faux') || correct === 'false' || correct === 'f';
@@ -344,9 +379,10 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
   const enonce = exercice.enonce ?? '';
   const consigne = exercice.consigne ?? '';
   const eenoceLines = enonce.split('\n').map(s => s.trim()).filter(Boolean);
-  // Items rendered inside the response component — skip the separate enonce paragraph
+  // Items rendered inside their own component — skip the separate enonce paragraph for these
   const isMultiItemQcm = exercice.type === 'qcm' && eenoceLines.length > 1;
   const isMultiItemAssoc = exercice.type === 'association' && eenoceLines.length > 1 && (exercice.options?.length ?? 0) > 0;
+  const isMultiItemVF = exercice.type === 'vrai_faux' && eenoceLines.length > 1;
 
   return (
     <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-paper p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0 print:bg-white">
@@ -362,7 +398,7 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
 
       <p className="font-semibold text-sm text-ink">{consigne}</p>
 
-      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && !isMultiItemAssoc && eenoceLines.length > 0 && enonce !== consigne && (
+      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && !isMultiItemAssoc && !isMultiItemVF && eenoceLines.length > 0 && enonce !== consigne && (
         <div className="mt-1.5 space-y-0.5 text-sm text-ink-soft">
           {eenoceLines.map((line, i) => <p key={i}>{line}</p>)}
         </div>

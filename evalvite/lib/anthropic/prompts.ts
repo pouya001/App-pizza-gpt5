@@ -18,18 +18,26 @@ TYPES D'EXERCICES — choisis celui qui correspond le mieux au format réel du c
 
 • "qcm" — Question à choix multiples.
   - Si CHAQUE item de la liste a ses propres cases à cocher (ex : "• des joueurs → ☐ défini ☐ indéfini ☐ partitif"), alors :
-    → mets les items dans "enonce" séparés par \\n (un item par ligne, ex: "• des joueurs\\n• du beurre\\n• la maison")
+    → mets les items dans "enonce" séparés par \\n (un item par ligne)
     → "options" = les choix possibles (ex: ["article défini", "article indéfini", "article partitif"])
-    → "reponse_correcte" = tableau avec une réponse par item dans l'ordre (ex: ["article indéfini", "article partitif", "article défini"])
-  - Sinon (une seule question avec plusieurs choix) : "enonce" = la question, "options" = les choix, "reponse_correcte" = la bonne réponse.
+    → "reponse_correcte" = tableau avec UNE réponse par item dans l'ordre
+  - Sinon (une seule question) : "enonce" = la question, "options" = les choix, "reponse_correcte" = la bonne réponse.
+  - RÈGLE ABSOLUE : chaque option doit être UNE réponse unique et distincte. Ne JAMAIS mettre plusieurs formes séparées par "/" dans une même option (ex: INTERDIT "va savoir / allons savoir / vont savoir" — chaque forme doit être une option séparée).
 
-• "texte_a_trous" — Texte avec des ___ à compléter. "blancs" = les mots attendus.
+• "texte_a_trous" — Texte avec des ___ à compléter.
+  - Utilise UN SEUL ___ par réponse attendue, même si la réponse contient plusieurs mots (ex: futur proche = "allons faire" → UN seul ___).
+  - "blancs" = tableau des réponses, UNE réponse par ___ dans l'ordre (ex: ["allons faire", "vas dire", "va venir"]).
+  - Ne JAMAIS créer deux ___ consécutifs pour un verbe à deux mots. Le blank représente toute la forme verbale.
 
 • "question_ouverte" — Réponse rédigée, ou phrases à souligner/entourer/identifier.
 
 • "calcul" — Opérations arithmétiques.
 
-• "vrai_faux" — Affirmations à évaluer vrai ou faux. "explication_corrige" = la justification.
+• "vrai_faux" — Affirmations à évaluer vrai ou faux.
+  - Si plusieurs affirmations (exercice "Lis chaque phrase, écris VRAI ou FAUX") :
+    → mets chaque affirmation dans "enonce" séparée par \\n (une par ligne)
+    → "reponse_correcte" = tableau ["vrai", "faux", "vrai", ...] une réponse par affirmation dans l'ordre
+  - Si une seule affirmation : "reponse_correcte" = "vrai" ou "faux", "explication_corrige" = la justification.
 
 • "association" — Relier deux groupes d'éléments par paires (colonne gauche ↔ colonne droite).
   → "enonce" = items de la COLONNE GAUCHE, un par ligne avec \\n (ex: "chien\\nchat\\noiseau")
