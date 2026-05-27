@@ -82,7 +82,11 @@ export default function HomePage() {
         setStep('upload');
         return;
       }
-      setError((err as Error).message ?? 'Erreur inattendue.');
+      const msg = (err as Error).message ?? '';
+      const friendlyMsg = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')
+        ? 'Erreur réseau — vérifiez votre connexion et réessayez.'
+        : msg || 'Erreur inattendue.';
+      setError(friendlyMsg);
       setStep('upload');
     }
   }
