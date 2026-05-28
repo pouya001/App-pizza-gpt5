@@ -49,9 +49,9 @@ TYPES D'EXERCICES — choisis celui qui correspond le mieux au format réel du c
 
 • "conjugaison" — UNIQUEMENT pour conjuguer un verbe dans un tableau (ex : conjuguer "être" au présent). Ne JAMAIS utiliser pour des exercices grammaticaux non-verbaux.
 
-• "tableau" — Tableau d'analyse ou de classification (genre/nombre/nature, classer des mots, compléter une grille d'analyse, etc.).
-  → "colonnes" = en-têtes des colonnes (ex: ["Déterminant", "Nature", "Genre", "Nombre"])
-  → "options" = items pré-remplis dans la 1ère colonne (ex: ["Les", "du", "au"])
+• "tableau" — Tableau d'analyse ou de classification (genre/nombre/nature, classer des mots, compléter une grille, etc.).
+  → "options" = items pré-remplis dans la colonne de gauche (ex: ["blond", "fragile", "fort"]) — la 1ère colonne sera automatiquement créée pour ces items
+  → "colonnes" = en-têtes des colonnes VIDES à remplir par l'élève (ex: ["+e", "-ère", "double consonne +e", "invariable"]) — NE PAS inclure un en-tête pour la colonne des items
   → "explication_corrige" = le tableau complété décrit en texte court
 
 FORMAT DE RÉPONSE — JSON STRICTEMENT VALIDE :

@@ -241,30 +241,30 @@ function AssociationResponse({ exercice, showAnswer }: Props) {
   const rightItems = exercice.options ?? [];
   const correctAnswers = toStringArray(exercice.reponse_correcte);
 
-  // Two-column mode: left items in enonce (one per line), right items in options
+  // Two-column mode: always side by side (never collapse on mobile)
   if (leftItems.length > 1 && rightItems.length > 0) {
     return (
-      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 print:grid-cols-2">
+      <div className="mt-3 grid grid-cols-2 gap-x-3">
         {/* Left column */}
         <div className="divide-y divide-line">
           {leftItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-2 py-2">
+            <div key={i} className="flex items-center gap-1.5 py-2">
               <span className="w-5 shrink-0 text-sm font-semibold text-ink">{i + 1}.</span>
-              <span className="flex-1 text-sm text-ink">{item}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-ink">{item}</span>
               {showAnswer
-                ? <span className="ml-1 text-sm font-bold text-sage">→ {correctAnswers[i] ?? '—'}</span>
-                : <div className="w-10 shrink-0 border-b border-dashed border-ink/40" />
+                ? <span className="shrink-0 text-xs font-bold text-sage">→{correctAnswers[i] ?? '—'}</span>
+                : <div className="w-6 shrink-0 border-b border-dashed border-ink/40" />
               }
             </div>
           ))}
         </div>
 
         {/* Right column */}
-        <div className="divide-y divide-line border-l border-line pl-4">
+        <div className="divide-y divide-line border-l border-line pl-3">
           {rightItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-2 py-2">
+            <div key={i} className="flex items-center gap-1.5 py-2">
               <span className="w-6 shrink-0 text-sm font-semibold text-ink-soft">{String.fromCharCode(65 + i)}.</span>
-              <span className="text-sm text-ink">{item}</span>
+              <span className="min-w-0 text-sm text-ink">{item}</span>
             </div>
           ))}
         </div>
@@ -333,15 +333,20 @@ function CalcResponse({ exercice, showAnswer }: Props) {
 function TableauResponse({ exercice, showAnswer }: Props) {
   const colonnes = exercice.colonnes ?? [];
   const rowItems = exercice.options ?? [];
+  const hasPrefilledCol = rowItems.length > 0;
   const rowCount = rowItems.length || 4;
 
-  if (colonnes.length === 0) return <BlankLines count={4} />;
+  if (colonnes.length === 0 && !hasPrefilledCol) return <BlankLines count={4} />;
 
   return (
     <div className="mt-3 overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
+            {/* Pre-filled column has no header (or a blank one) */}
+            {hasPrefilledCol && (
+              <th className="border border-ink/30 bg-paper-dark px-3 py-2 text-left text-xs font-semibold text-ink print:bg-transparent" />
+            )}
             {colonnes.map((col, i) => (
               <th key={i} className="border border-ink/30 bg-paper-dark px-3 py-2 text-left text-xs font-semibold text-ink print:bg-transparent">
                 {col}
@@ -352,12 +357,14 @@ function TableauResponse({ exercice, showAnswer }: Props) {
         <tbody>
           {Array.from({ length: rowCount }).map((_, i) => (
             <tr key={i}>
+              {hasPrefilledCol && (
+                <td className="border border-ink/30 px-3 py-2.5 text-sm font-medium text-ink">
+                  {rowItems[i] ?? ''}
+                </td>
+              )}
               {colonnes.map((_, j) => (
-                <td key={j} className="border border-ink/30 px-3 py-3 text-sm">
-                  {j === 0 && rowItems[i]
-                    ? <span className="font-medium text-ink">{rowItems[i]}</span>
-                    : <span>&nbsp;</span>
-                  }
+                <td key={j} className="border border-ink/30 px-3 py-2.5 text-sm">
+                  <span>&nbsp;</span>
                 </td>
               ))}
             </tr>
