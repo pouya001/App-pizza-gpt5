@@ -26,6 +26,11 @@
   }
 }
 
+/* ─── Hide Vercel Toolbar (preview deployments) ─────────────────── */
+vercel-toolbar {
+  display: none !important;
+}
+
 /* ─── Print styles ─────────────────────────────────────────────── */
 @media print {
   @page {
