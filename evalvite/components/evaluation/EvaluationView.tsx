@@ -20,9 +20,9 @@ export function EvaluationView({ evaluation, onBack }: Props) {
     : evaluation.titre;
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-white">
       {/* Action bar — hidden on print */}
-      <div className="print:hidden sticky top-0 z-10 border-b border-line bg-paper/95 backdrop-blur-sm">
+      <div className="print:hidden sticky top-0 z-10 border-b border-line bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <button
             onClick={onBack}

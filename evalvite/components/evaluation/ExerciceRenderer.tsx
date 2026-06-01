@@ -392,7 +392,7 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
   const isMultiItemVF = exercice.type === 'vrai_faux' && eenoceLines.length > 1;
 
   return (
-    <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-paper p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0 print:bg-white">
+    <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-white p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span className="text-base font-bold text-ink">Exercice {exercice.numero}</span>
         <span className="text-xs italic text-ink-soft">{typeLabel}</span>
