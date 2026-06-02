@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Fraunces } from 'next/font/google';
 import { GeistSans } from 'geist/font/sans';
+import { VercelToolbarKiller } from '@/components/VercelToolbarKiller';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -19,7 +20,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${fraunces.variable} ${GeistSans.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+        <VercelToolbarKiller />
+      </body>
     </html>
   );
 }
