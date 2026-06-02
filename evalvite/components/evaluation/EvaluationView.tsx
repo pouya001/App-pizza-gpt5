@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, FileDown } from 'lucide-react';
 import { MatiereBadge } from '@/components/ui/Badge';
 import { ExerciceRenderer } from './ExerciceRenderer';
 import type { Evaluation } from '@/lib/types';
@@ -13,7 +13,31 @@ interface Props {
 
 export function EvaluationView({ evaluation, onBack }: Props) {
   const [activeTab, setActiveTab] = useState<'eval' | 'corrige'>('eval');
+  const [downloading, setDownloading] = useState(false);
   const showAnswer = activeTab === 'corrige';
+
+  async function handleDownloadWord() {
+    setDownloading(true);
+    try {
+      const res = await fetch('/api/export/word', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ evaluation, showAnswer }),
+      });
+      if (!res.ok) throw new Error('Export échoué');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = showAnswer ? 'corrige.docx' : 'evaluation.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Erreur lors du téléchargement Word.');
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const evalTitle = showAnswer
     ? `✓ Corrigé — ${evaluation.titre}`
@@ -49,13 +73,23 @@ export function EvaluationView({ evaluation, onBack }: Props) {
             ))}
           </div>
 
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 rounded-lg bg-brick px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brick-dark"
-          >
-            <Printer className="h-4 w-4" />
-            Imprimer
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadWord}
+              disabled={downloading}
+              className="flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-paper-dark disabled:opacity-50"
+            >
+              <FileDown className="h-4 w-4" />
+              {downloading ? '…' : 'Word'}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 rounded-lg bg-brick px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-brick-dark"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimer
+            </button>
+          </div>
         </div>
       </div>
 
