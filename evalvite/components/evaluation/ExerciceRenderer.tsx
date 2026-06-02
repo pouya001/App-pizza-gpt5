@@ -319,14 +319,48 @@ function LegendeResponse({ exercice, showAnswer }: Props) {
 }
 
 function CalcResponse({ exercice, showAnswer }: Props) {
+  const enonce = exercice.enonce ?? '';
+  const eenoceLines = enonce.split('\n').map(s => s.trim()).filter(Boolean);
+  const answers = toStringArray(exercice.reponse_correcte);
+
+  // Multi-item corrigé: fill each answer inline at its blank position
+  if (showAnswer && eenoceLines.length > 1) {
+    return (
+      <div className="mt-3 space-y-1.5">
+        {eenoceLines.map((line, i) => {
+          const ans = answers[i] ?? '—';
+          if (line.includes('___')) {
+            const [before, after] = line.split('___');
+            return (
+              <p key={i} className="text-sm text-ink">
+                {before.trimEnd()}{' '}
+                <span className="inline-block min-w-[60px] border-b-2 border-sage text-center font-bold text-sage">{ans}</span>
+                {after ? ` ${after.trimStart()}` : ''}
+              </p>
+            );
+          }
+          // No blank placeholder — append answer after the line
+          return (
+            <p key={i} className="text-sm text-ink">
+              {line}{' '}
+              <span className="inline-block min-w-[60px] border-b-2 border-sage text-center font-bold text-sage">{ans}</span>
+            </p>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Single-answer corrigé
   if (showAnswer) {
-    const answer = toStringArray(exercice.reponse_correcte).join(', ') || '—';
+    const answer = answers.join(', ') || '—';
     return (
       <div className="mt-3 rounded-lg border border-sage/30 bg-sage/5 p-3 print:bg-white">
         <span className="text-xs font-semibold uppercase tracking-wide text-sage">= {answer}</span>
       </div>
     );
   }
+
   return <div className="mt-3 h-16 rounded-lg border border-dashed border-ink/30" />;
 }
 
@@ -390,6 +424,8 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
   const isMultiItemQcm = exercice.type === 'qcm' && eenoceLines.length > 1;
   const isMultiItemAssoc = exercice.type === 'association' && eenoceLines.length > 1 && (exercice.options?.length ?? 0) > 0;
   const isMultiItemVF = exercice.type === 'vrai_faux' && eenoceLines.length > 1;
+  // In corrigé mode, CalcResponse renders items+answers inline — skip separate rendering
+  const isMultiItemCalcCorrige = exercice.type === 'calcul' && showAnswer && eenoceLines.length > 1;
 
   return (
     <div className="exercice-block break-inside-avoid rounded-xl border border-line bg-white p-5 shadow-sm print:rounded-none print:border-0 print:border-b print:border-line print:shadow-none print:px-0">
@@ -405,7 +441,7 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
 
       <p className="font-semibold text-sm text-ink">{consigne}</p>
 
-      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && !isMultiItemAssoc && !isMultiItemVF && eenoceLines.length > 0 && enonce !== consigne && (
+      {exercice.type !== 'texte_a_trous' && !isMultiItemQcm && !isMultiItemAssoc && !isMultiItemVF && !isMultiItemCalcCorrige && eenoceLines.length > 0 && enonce !== consigne && (
         <div className="mt-1.5 space-y-0.5 text-sm text-ink-soft">
           {eenoceLines.map((line, i) => <p key={i}>{line}</p>)}
         </div>
