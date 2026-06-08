@@ -6,4 +6,4 @@ export const anthropic = new Anthropic({
 });
 
 export const CLAUDE_MODEL = 'claude-sonnet-4-6';
-export const MAX_TOKENS = 4096;
+export const MAX_TOKENS = 8192;
