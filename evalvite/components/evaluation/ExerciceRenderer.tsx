@@ -1,5 +1,5 @@
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import type { Exercice } from '@/lib/types';
+import type { Exercice, GeometrieFigure } from '@/lib/types';
 
 interface Props {
   exercice: Exercice;
@@ -16,6 +16,7 @@ const TYPE_LABELS: Record<string, string> = {
   legende: 'Légende',
   conjugaison: 'Conjugaison',
   tableau: 'Tableau',
+  geometrie: 'Géométrie',
 };
 
 function toStringArray(v: string | string[] | undefined | null): string[] {
@@ -415,6 +416,49 @@ function TableauResponse({ exercice, showAnswer }: Props) {
   );
 }
 
+function GeometrieResponse({ exercice, showAnswer }: Props) {
+  const figures: GeometrieFigure[] = exercice.figures ?? [];
+  const correct = toStringArray(exercice.reponse_correcte);
+
+  if (figures.length === 0) return <BlankLines count={3} />;
+
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {figures.map((fig) => {
+        const isCorrect = correct.includes(fig.label);
+        return (
+          <div
+            key={fig.label}
+            className={`flex flex-col items-center rounded-xl border-2 p-3 transition-colors ${
+              showAnswer && isCorrect
+                ? 'border-sage bg-sage/5'
+                : showAnswer
+                ? 'border-line/60 opacity-60'
+                : 'border-line bg-white'
+            }`}
+          >
+            {/* SVG figure — Claude generates self-contained SVG with single-quoted attributes */}
+            <div
+              className="flex w-full items-center justify-center [&_svg]:max-w-full [&_svg]:h-auto"
+              dangerouslySetInnerHTML={{ __html: fig.svg }}
+            />
+            <div className="mt-2 flex w-full items-center justify-between px-1">
+              <span className="text-sm font-bold text-ink">{fig.label}</span>
+              {showAnswer ? (
+                <span className={`text-xs font-bold ${isCorrect ? 'text-sage' : 'text-ink-soft'}`}>
+                  {isCorrect ? '✓ Correct' : '✗'}
+                </span>
+              ) : (
+                <div className="h-4 w-4 shrink-0 rounded border-2 border-ink/40" />
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ExerciceContent({ exercice, showAnswer }: Props) {
   const typeLabel = TYPE_LABELS[exercice.type] ?? exercice.type;
   const enonce = exercice.enonce ?? '';
@@ -456,6 +500,7 @@ function ExerciceContent({ exercice, showAnswer }: Props) {
       {exercice.type === 'legende' && <LegendeResponse exercice={exercice} showAnswer={showAnswer} />}
       {exercice.type === 'calcul' && <CalcResponse exercice={exercice} showAnswer={showAnswer} />}
       {exercice.type === 'tableau' && <TableauResponse exercice={exercice} showAnswer={showAnswer} />}
+      {exercice.type === 'geometrie' && <GeometrieResponse exercice={exercice} showAnswer={showAnswer} />}
 
       {showAnswer && exercice.explication_corrige && exercice.type !== 'vrai_faux' && exercice.type !== 'tableau' && (
         <p className="mt-3 rounded-md bg-paper-dark px-3 py-1.5 text-xs text-ink-soft print:bg-transparent">

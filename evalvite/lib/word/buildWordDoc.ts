@@ -348,6 +348,13 @@ function buildExercise(ex: Exercice, showAnswer: boolean): (Paragraph | Table)[]
     case 'legende':        items.push(...renderLegende(ex, showAnswer)); break;
     case 'conjugaison':    items.push(...renderConjugaison(ex, showAnswer)); break;
     case 'tableau':        items.push(...renderTableau(ex, showAnswer)); break;
+    case 'geometrie': {
+      // SVG can't be embedded in Word — note the figures and list the correct answers
+      const labels = (ex.figures ?? []).map(f => f.label).join('   ');
+      if (labels) items.push(new Paragraph({ children: [new TextRun({ text: `Figures : ${labels}`, font: FONT, size: pt(11) })], spacing: { after: 60 } }));
+      items.push(...renderOpen(ex, showAnswer));
+      break;
+    }
   }
 
   if (showAnswer && ex.explication_corrige && !['vrai_faux', 'tableau'].includes(ex.type)) {

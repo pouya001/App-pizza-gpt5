@@ -54,6 +54,20 @@ TYPES D'EXERCICES — choisis celui qui correspond le mieux au format réel du c
   → "colonnes" = en-têtes des colonnes VIDES à remplir par l'élève (ex: ["+e", "-ère", "double consonne +e", "invariable"]) — NE PAS inclure un en-tête pour la colonne des items
   → "explication_corrige" = le tableau complété décrit en texte court
 
+• "geometrie" — Exercice avec figures géométriques SVG (développements de solides, symétrie, formes planes). Utilise CE type quand le cours contient des schémas géométriques à identifier, colorier ou reconnaître.
+  → "figures" = tableau d'objets {"svg":"...","label":"A","correcte":true/false}
+  → RÈGLES SVG ABSOLUES :
+     1. Utilise UNIQUEMENT des apostrophes (') dans les attributs SVG — jamais de guillemets doubles à l'intérieur du SVG
+     2. Chaque SVG doit être auto-contenu avec viewBox. Exemple minimal :
+        <svg viewBox='0 0 120 160' width='120' height='160' xmlns='http://www.w3.org/2000/svg'>
+          <rect x='40' y='0' width='40' height='40' fill='white' stroke='black' stroke-width='2'/>
+        </svg>
+     3. Fond blanc (fill='white'), contours noirs (stroke='black' stroke-width='2')
+     4. Taille de case standard : 40px × 40px
+  → Pour les développements du cube : génère 4 à 6 figures, 2 ou 3 sont valides. Les figures valides doivent être de VRAIES mises à plat correctes du cube (exactement 6 carrés connectés qui se plient bien). Les figures invalides doivent l'être clairement (mauvaise forme, mauvais nombre de carrés, etc.).
+  → "reponse_correcte" = tableau des labels corrects ex: ["A", "D"]
+  → "explication_corrige" = justification courte (ex: "A et D : 6 carrés correctement reliés")
+
 FORMAT DE RÉPONSE — JSON STRICTEMENT VALIDE :
 {
   "matiere": "string",
@@ -71,6 +85,7 @@ FORMAT DE RÉPONSE — JSON STRICTEMENT VALIDE :
       "options": ["string"] (pour qcm : choix possibles ; pour tableau : items 1ère colonne ; sinon omis),
       "colonnes": ["string"] (pour tableau uniquement),
       "blancs": ["string"] (pour texte_a_trous uniquement),
+      "figures": [{"svg":"string","label":"string","correcte":boolean}] (pour geometrie uniquement),
       "reponse_correcte": "string ou string[]",
       "explication_corrige": "string (réponse courte pour correction rapide)"
     }
