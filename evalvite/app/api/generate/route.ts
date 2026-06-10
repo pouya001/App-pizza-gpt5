@@ -88,6 +88,10 @@ export async function POST(req: NextRequest) {
           ],
         });
 
+        if (message.stop_reason === 'max_tokens') {
+          throw new Error('La réponse IA a été tronquée (trop longue). Réessayez ou réduisez le nombre de documents.');
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const responseText = (message.content as any[])
           .filter((b: any) => b.type === 'text')
