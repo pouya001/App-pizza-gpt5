@@ -56,6 +56,15 @@ export default function HomePage() {
     setStep('generating');
 
     try {
+      // Base64 payload size check — Vercel hard limit is 4.5 MB
+      const totalBase64Bytes = files.reduce((sum, f) => sum + f.data.length, 0);
+      if (totalBase64Bytes > 3_500_000) {
+        const sizeMb = (totalBase64Bytes * 0.75 / 1_048_576).toFixed(1);
+        setError(`Les fichiers sont trop volumineux (${sizeMb} Mo). Maximum ~3 Mo par génération. Compressez le PDF ou utilisez des photos à la place.`);
+        setStep('upload');
+        return;
+      }
+
       const res = await fetch('/api/generate', {
         method: 'POST',
         signal: controller.signal,
@@ -67,8 +76,18 @@ export default function HomePage() {
       });
 
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        throw new Error(body.error ?? 'Erreur lors de la génération.');
+        let errorMsg = 'Erreur lors de la génération.';
+        try {
+          const errBody = (await res.json()) as { error?: string };
+          errorMsg = errBody.error ?? errorMsg;
+        } catch {
+          if (res.status === 413) {
+            errorMsg = 'Le fichier est trop volumineux. Maximum ~3 Mo par génération. Compressez le PDF ou utilisez des photos à la place.';
+          } else if (res.status >= 500) {
+            errorMsg = 'Erreur serveur. Veuillez réessayer.';
+          }
+        }
+        throw new Error(errorMsg);
       }
 
       const body = (await res.json()) as { evaluation: Evaluation };
