@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper: #FAF7F2;
+    --paper-dark: #F0EBE0;
+    --ink: #1a1612;
+    --ink-soft: #5c544a;
+    --brick: #C2410C;
+    --brick-dark: #9A330A;
+    --sage: #3F6B4E;
+    --accent: #E8B547;
+    --line: #D9D2C4;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+  }
+}
+
+/* ─── Hide Vercel Toolbar (preview deployments) ─────────────────── */
+vercel-toolbar,
+#vercel-live-feedback,
+#__vercel_toolbar,
+#__vercel_toolbar_wrapper,
+iframe[src*="vercel.live"],
+iframe[name="vercel-live-feedback"] {
+  display: none !important;
+}
+
+/* ─── Print styles ─────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm 18mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  /* Hide screen-only elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reveal print-only elements */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Page breaks */
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+
+  /* Clean up card borders for print */
+  .exercice-block {
+    border: none !important;
+    border-bottom: 1px solid #ccc !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-bottom: 16pt !important;
+  }
+}
